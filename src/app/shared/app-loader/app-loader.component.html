@@ -1,0 +1,17 @@
+@if (loadingService.isLoading()) {
+  <div class="app-loader" aria-live="polite" aria-busy="true">
+    <div class="app-loader__backdrop"></div>
+    <div class="app-loader__panel">
+      <div class="app-loader__brand">
+        <span class="app-loader__logo"><i class="bi bi-house-door-fill"></i></span>
+        <strong>Shree Yogi Engineering</strong>
+      </div>
+      <div class="app-loader__spinner" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <p>{{ loadingService.message() }}</p>
+    </div>
+  </div>
+}

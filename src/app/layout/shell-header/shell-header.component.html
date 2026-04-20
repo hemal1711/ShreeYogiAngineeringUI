@@ -1,0 +1,48 @@
+<header class="shell-header">
+  <div class="shell-header__left">
+    <button type="button" class="shell-header__toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="shell-header__brand">
+      <div class="shell-header__logo">
+        <i class="bi bi-house-door-fill"></i>
+      </div>
+      @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
+        <span>Shree Yogi Engineering</span>
+      }
+    </div>
+  </div>
+
+  <div class="shell-header__actions">
+    @if (currentUser(); as user) {
+      <div class="shell-header__menu">
+        <button type="button" class="shell-header__profile" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+          <div class="shell-header__avatar">{{ initials() }}</div>
+          <div class="shell-header__identity">
+            <strong>{{ user.fullName | uppercase }}</strong>
+            <small>{{ user.email }}</small>
+          </div>
+          <i class="bi bi-chevron-down shell-header__profile-caret" [class.shell-header__profile-caret--open]="menuOpen()"></i>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="shell-header__dropdown">
+            <a routerLink="/dashboard" (click)="closeMenu()">
+              <i class="bi bi-house-door"></i>
+              <span>Home</span>
+            </a>
+            <a routerLink="/settings" (click)="closeMenu()">
+              <i class="bi bi-gear"></i>
+              <span>Settings</span>
+            </a>
+            <button type="button" (click)="logout()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</header>

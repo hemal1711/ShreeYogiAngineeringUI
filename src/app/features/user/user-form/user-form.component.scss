@@ -1,0 +1,67 @@
+@use '../../shared-management-form';
+
+.user-form {
+  max-width: 58rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.role-picker {
+  margin: 1rem 0 1.5rem;
+}
+
+.role-picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.role-picker__header h2 {
+  margin: 0;
+  color: #162240;
+  font-size: 1rem;
+}
+
+.role-picker__header span {
+  color: #7983a3;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 4rem;
+  padding: 0.85rem;
+  border: 1px solid #e4e7f1;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.role-option span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.role-option small {
+  color: #7983a3;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

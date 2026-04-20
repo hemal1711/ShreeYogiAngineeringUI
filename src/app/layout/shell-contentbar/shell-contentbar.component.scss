@@ -1,0 +1,35 @@
+.shell-contentbar {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, #fafbfd 0%, #fff 50%, #fafbfd 100%);
+  
+  // Content sizing
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+// Responsive Design
+@media (max-width: 1400px) {
+  .shell-contentbar {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .shell-contentbar {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .shell-contentbar {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .shell-contentbar {
+    padding: 0.5rem;
+  }
+}

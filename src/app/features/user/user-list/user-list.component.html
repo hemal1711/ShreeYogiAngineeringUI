@@ -1,0 +1,102 @@
+<div class="management-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="page-header">
+    <div>
+      <h1><i class="bi bi-people"></i> Users</h1>
+      <p>Manage users and their role assignments.</p>
+    </div>
+    @if (canCreate) {
+      <a routerLink="/users/add" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        Add User
+      </a>
+    }
+  </div>
+
+  <div class="toolbar user-toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input class="form-control" type="text" placeholder="Search users..." [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" />
+      <button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onSearch()">Search</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading users...</p>
+    </div>
+  }
+
+  @if (!isLoading() && users().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No Users Found</h3>
+      <p>Create the first user for this workspace.</p>
+    </div>
+  }
+
+  @if (!isLoading() && users().length > 0) {
+    <div class="table-responsive">
+      <table class="management-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th style="width: 100px">Status</th>
+            <th style="width: 110px">Created</th>
+            <th style="width: 120px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.correlationId) {
+            <tr>
+              <td><strong>{{ user.userName }}</strong></td>
+              <td>{{ user.email || '-' }}</td>
+              <td>{{ getFullName(user) }}</td>
+              <td><span class="badge" [ngClass]="getStatusBadge(user.isActive).class">{{ getStatusBadge(user.isActive).text }}</span></td>
+              <td class="text-muted">{{ user.createdOn | date: 'mediumDate' }}</td>
+              <td>
+                <div class="action-buttons">
+                  @if (canUpdate) {
+                    <a [routerLink]="['/users/edit', user.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit user">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  }
+                  @if (canDelete) {
+                    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === user.correlationId" (click)="onDelete(user)" title="Delete user">
+                      @if (deletingId() === user.correlationId) {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                      } @else {
+                        <i class="bi bi-trash"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <div class="pagination-container">
+        <nav aria-label="Pagination Navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(1)"><i class="bi bi-chevron-double-left"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(pageNumber() - 1)"><i class="bi bi-chevron-left"></i></button></li>
+            @for (page of pageRange; track page) {
+              <li class="page-item" [class.active]="page === pageNumber()"><button type="button" class="page-link" (click)="onPageChange(page)">{{ page }}</button></li>
+            }
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(pageNumber() + 1)"><i class="bi bi-chevron-right"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(totalPages)"><i class="bi bi-chevron-double-right"></i></button></li>
+          </ul>
+        </nav>
+        <div class="pagination-info">Page {{ pageNumber() }} of {{ totalPages }} ({{ totalCount() }} total)</div>
+      </div>
+    }
+  }
+</div>

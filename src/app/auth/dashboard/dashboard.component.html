@@ -1,0 +1,77 @@
+<div class="dashboard-page">
+  <section class="dashboard-page__hero">
+    <div>
+      <p class="dashboard-page__eyebrow">Overview</p>
+      <h1>Dashboard</h1>
+      <p>Track service activity, payouts, and booking operations from one clear workspace.</p>
+    </div>
+    <div class="dashboard-page__hero-meta">
+      <span>Updated today</span>
+      <strong>12:59 PM</strong>
+    </div>
+  </section>
+
+  <section class="dashboard-page__notice">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    <span>
+      Important Notice: Please enable RazorpayX From PAYMENT CONFIGURATION tab to allow providers to withdraw their funds.
+      <a routerLink="/settings">Here is the link <i class="bi bi-box-arrow-up-right"></i></a>
+    </span>
+  </section>
+
+  <section class="dashboard-page__stats">
+    @for (card of metricCards; track card.label) {
+      <article class="metric-card">
+        <div>
+          <h2>{{ card.value }}</h2>
+          <p>{{ card.label }}</p>
+        </div>
+        <i [class]="'bi ' + card.icon"></i>
+      </article>
+    }
+  </section>
+
+  <section class="dashboard-page__chart panel">
+    <div class="panel__header">
+      <div>
+        <h3>Monthly Revenue</h3>
+      </div>
+      <div class="panel__actions">
+        <i class="bi bi-search"></i>
+        <i class="bi bi-sliders"></i>
+      </div>
+    </div>
+
+    <div class="chart">
+      <canvas
+        baseChart
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+        [type]="'line'"
+      ></canvas>
+    </div>
+  </section>
+
+  <section class="dashboard-page__panels">
+    @for (panel of summaryPanels; track panel.title) {
+      <article class="panel panel--summary">
+        <div class="panel__header">
+          <h3>{{ panel.title }} ({{ panel.count }})</h3>
+          <a routerLink="/settings">View All</a>
+        </div>
+
+        <div class="summary-list">
+          @for (item of panel.items; track item.name) {
+            <div class="summary-list__item">
+              <div class="summary-list__avatar">{{ item.name[0] }}</div>
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.meta }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+    }
+  </section>
+</div>

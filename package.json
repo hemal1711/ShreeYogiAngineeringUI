@@ -1,0 +1,42 @@
+{
+  "name": "shree-yogi-engineering-ui",
+  "version": "1.0.0",
+  "description": "Shree Yogi Engineering Angular UI with Authentication",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "ng lint"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^21.0.0",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/platform-browser-dynamic": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "bootstrap": "^5.3.0",
+    "chart.js": "^4.5.1",
+    "ng2-charts": "^10.0.0",
+    "rxjs": "^7.8.0",
+    "tslib": "^2.6.0",
+    "zone.js": "^0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.0.0",
+    "@angular/cli": "^21.0.0",
+    "@angular/compiler-cli": "^21.0.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.0.0",
+    "angular-eslint": "21.3.1",
+    "eslint": "^10.0.3",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "8.56.1"
+  }
+}

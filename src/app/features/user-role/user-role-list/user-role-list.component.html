@@ -1,0 +1,107 @@
+<div class="management-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="page-header">
+    <div>
+      <h1><i class="bi bi-person-check"></i> User Roles</h1>
+      <p>Assign non-system roles to users and remove existing assignments.</p>
+    </div>
+  </div>
+
+  @if (canShowAssignForm) {
+    <form [formGroup]="form" (ngSubmit)="onAssign()" class="assignment-panel">
+      <select class="form-select" formControlName="userCorrelationId" aria-label="User">
+        <option value="">Select user</option>
+        @for (user of users(); track user.correlationId) {
+          <option [value]="user.correlationId">{{ user.userName }}</option>
+        }
+      </select>
+      <select class="form-select" formControlName="roleCorrelationId" aria-label="Role">
+        <option value="">Select role</option>
+        @for (role of roles(); track role.correlationId) {
+          <option [value]="role.correlationId">{{ role.roleName }}</option>
+        }
+      </select>
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+        @if (isSubmitting()) {
+          <span><span class="spinner-border spinner-border-sm me-2"></span>Assigning...</span>
+        } @else {
+          <span>Assign Role</span>
+        }
+      </button>
+    </form>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading user roles...</p>
+    </div>
+  }
+
+  @if (!isLoading() && assignments().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No User Roles Found</h3>
+      <p>Assign a role to a user to get started.</p>
+    </div>
+  }
+
+  @if (!isLoading() && assignments().length > 0) {
+    <div class="table-responsive">
+      <table class="management-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th style="width: 100px">Role Status</th>
+            <th style="width: 110px">Assigned</th>
+            <th style="width: 100px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (assignment of assignments(); track assignment.correlationId) {
+            <tr>
+              <td><strong>{{ assignment.userName }}</strong></td>
+              <td>{{ assignment.roleName }}</td>
+              <td>
+                <span class="badge" [ngClass]="assignment.roleIsActive ? 'badge-success' : 'badge-danger'">
+                  {{ assignment.roleIsActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-muted">{{ assignment.createdOn | date: 'mediumDate' }}</td>
+              <td>
+                @if (canDelete) {
+                  <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="removingId() === assignment.correlationId" (click)="onRemove(assignment)" title="Remove role">
+                    @if (removingId() === assignment.correlationId) {
+                      <span class="spinner-border spinner-border-sm" role="status"></span>
+                    } @else {
+                      <i class="bi bi-trash"></i>
+                    }
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <div class="pagination-container">
+        <nav aria-label="Pagination Navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(1)"><i class="bi bi-chevron-double-left"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(pageNumber() - 1)"><i class="bi bi-chevron-left"></i></button></li>
+            @for (page of pageRange; track page) {
+              <li class="page-item" [class.active]="page === pageNumber()"><button type="button" class="page-link" (click)="onPageChange(page)">{{ page }}</button></li>
+            }
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(pageNumber() + 1)"><i class="bi bi-chevron-right"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(totalPages)"><i class="bi bi-chevron-double-right"></i></button></li>
+          </ul>
+        </nav>
+        <div class="pagination-info">Page {{ pageNumber() }} of {{ totalPages }} ({{ totalCount() }} total)</div>
+      </div>
+    }
+  }
+</div>

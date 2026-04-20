@@ -1,0 +1,69 @@
+<div class="management-form-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="form-header">
+    <div>
+      <h1><i class="bi bi-person-badge"></i> {{ pageTitle() }}</h1>
+      <p>Create roles and assign permission codes.</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading role...</p>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form role-form">
+      <div class="mb-3">
+        <label for="roleName" class="form-label">Role Name <span>*</span></label>
+        <input id="roleName" type="text" class="form-control" formControlName="roleName" [class.is-invalid]="isFieldInvalid('roleName')" placeholder="e.g. Operations Manager" />
+        @if (isFieldInvalid('roleName')) {
+          <div class="invalid-feedback">{{ getFieldError('roleName') }}</div>
+        }
+      </div>
+
+      <div class="form-check form-switch mb-4">
+        <input id="isActive" type="checkbox" class="form-check-input" formControlName="isActive" />
+        <label for="isActive" class="form-check-label">Active</label>
+      </div>
+
+      @if (canShowPermissionPicker) {
+        <section class="permission-picker">
+          <div class="permission-picker__header">
+            <h2>Permissions</h2>
+            <span>{{ selectedPermissionIds().size }} selected</span>
+          </div>
+          <div class="permission-grid">
+            @for (permission of permissions(); track permission.correlationId) {
+              <label class="permission-option">
+                <input
+                  type="checkbox"
+                  [checked]="selectedPermissionIds().has(permission.correlationId)"
+                  (change)="togglePermission(permission.correlationId)"
+                />
+                <span>
+                  <strong>{{ permission.code }}</strong>
+                  <small>{{ permission.name }}</small>
+                </span>
+              </label>
+            }
+          </div>
+        </section>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="isSubmitting()" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
+          } @else {
+            <span>{{ correlationId() ? 'Update' : 'Create' }} Role</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

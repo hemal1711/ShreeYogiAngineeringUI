@@ -1,0 +1,73 @@
+<aside
+  class="shell-sidebar"
+  [ngClass]="{ 'shell-sidebar--collapsed': layout.sidebarCollapsed() && !layout.mobileSidebarOpen() }"
+>
+  <div class="shell-sidebar__profile">
+    <div class="shell-sidebar__avatar">DA</div>
+
+    @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
+      <div class="shell-sidebar__identity">
+        <strong>{{ currentUser()?.email || 'user@workspace.local' }}</strong>
+        <span>{{ currentUser()?.fullName ?? 'Workspace User' }}</span>
+      </div>
+    }
+  </div>
+
+  @for (section of sections; track section.title) {
+    @if (hasVisibleItems(section)) {
+    <section class="shell-sidebar__section">
+      @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
+        <h2>{{ section.title }}</h2>
+      }
+
+      <ul>
+        @for (item of section.items; track item.label) {
+          @if (canShowItem(item)) {
+          <li>
+            @if (item.children?.length) {
+              <button
+                type="button"
+                class="shell-sidebar__item shell-sidebar__item--button"
+                [ngClass]="{ 'is-active': hasActiveChild(item), 'is-expanded': isExpanded(item.label) }"
+                (click)="toggleSection(item.label)"
+              >
+                <span><i [class]="'bi ' + item.icon"></i> <em>{{ item.label }}</em></span>
+                @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
+                  <i class="bi bi-chevron-down shell-sidebar__caret"></i>
+                }
+              </button>
+
+              @if ((!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) && isExpanded(item.label)) {
+                <div class="shell-sidebar__subitems">
+                  @for (child of item.children; track child.link) {
+                    @if (canShowChild(child.permissions)) {
+                    <a
+                      [routerLink]="child.link"
+                      [ngClass]="{ 'is-active': isActive(child.link) }"
+                      (click)="closeMobileSidebar()"
+                    >
+                      {{ child.label }}
+                    </a>
+                    }
+                  }
+                </div>
+              }
+            } @else {
+              <a
+                class="shell-sidebar__item"
+                [routerLink]="item.link!"
+                routerLinkActive="is-active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="closeMobileSidebar()"
+              >
+                <span><i [class]="'bi ' + item.icon"></i> <em>{{ item.label }}</em></span>
+              </a>
+            }
+          </li>
+          }
+        }
+      </ul>
+    </section>
+    }
+  }
+</aside>

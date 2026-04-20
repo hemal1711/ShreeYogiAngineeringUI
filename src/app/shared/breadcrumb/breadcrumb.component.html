@@ -1,0 +1,19 @@
+<nav class="breadcrumb-nav">
+  <ol class="breadcrumb-list">
+    @for (breadcrumb of breadcrumbs(); let last = $last; track breadcrumb.link) {
+      <li class="breadcrumb-item">
+        @if (last) {
+          <span class="breadcrumb-current">{{ breadcrumb.label }}</span>
+        }
+        @if (!last) {
+          <a [routerLink]="breadcrumb.link" class="breadcrumb-link">
+            {{ breadcrumb.label }}
+          </a>
+          <span class="breadcrumb-separator">
+            <i class="bi bi-chevron-right"></i>
+          </span>
+        }
+      </li>
+    }
+  </ol>
+</nav>

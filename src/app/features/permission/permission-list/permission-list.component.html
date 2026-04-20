@@ -1,0 +1,136 @@
+<div class="management-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="page-header">
+    <div>
+      <h1><i class="bi bi-shield-check"></i> Permissions</h1>
+      <p>Manage permission codes used by route guards and API authorization.</p>
+    </div>
+    @if (canCreate) {
+      <a routerLink="/permissions/add" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        Add Permission
+      </a>
+    }
+  </div>
+
+  <div class="toolbar permission-toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input class="form-control" type="text" placeholder="Search code or name..." [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" />
+      <button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onSearch()">Search</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading permissions...</p>
+    </div>
+  }
+
+  @if (!isLoading() && permissions().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No Permissions Found</h3>
+      <p>Create the first permission code for this workspace.</p>
+    </div>
+  }
+
+  @if (!isLoading() && permissions().length > 0) {
+    <div class="table-responsive">
+      <table class="management-table permission-matrix-table">
+        <thead>
+          <tr>
+            <th>Permission</th>
+            @for (action of permissionActions; track action) {
+              <th class="permission-action-col">{{ getPermissionActionLabel(action) }}</th>
+            }
+            <th>Other Permissions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of permissionMatrix(); track row.module) {
+            <tr>
+              <td>
+                <div class="permission-module">
+                  <strong>{{ row.moduleLabel }}</strong>
+                  <span>{{ row.module }}</span>
+                </div>
+              </td>
+
+              @for (action of permissionActions; track action) {
+                @let permission = getActionPermission(row, action);
+                <td class="permission-action-cell">
+                  <label class="permission-check" [class.permission-check--enabled]="permission" [title]="permission?.description || permission?.name || ''">
+                    <input type="checkbox" [checked]="!!permission && permission.isActive" disabled />
+                    <span></span>
+                  </label>
+
+                  @if (permission) {
+                    <div class="permission-cell-meta">
+                      <strong>{{ permission.code }}</strong>
+                      <small>{{ permission.name }}</small>
+                    </div>
+                    <div class="permission-cell-actions">
+                      @if (canUpdate) {
+                        <a [routerLink]="['/permissions/edit', permission.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit permission">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                      }
+                      @if (canDelete) {
+                        <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === permission.correlationId" (click)="onDelete(permission)" title="Delete permission">
+                          @if (deletingId() === permission.correlationId) {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                          } @else {
+                            <i class="bi bi-trash"></i>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </td>
+              }
+
+              <td>
+                @if (row.otherActions.length > 0) {
+                  <div class="other-permissions">
+                    @for (permission of row.otherActions; track permission.correlationId) {
+                      <span class="other-permission-chip" [class.other-permission-chip--inactive]="!permission.isActive">
+                        {{ permission.code }}
+                        @if (canUpdate) {
+                          <a [routerLink]="['/permissions/edit', permission.correlationId]" title="Edit permission">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                        }
+                      </span>
+                    }
+                  </div>
+                } @else {
+                  <span class="text-muted">-</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <div class="pagination-container">
+        <nav aria-label="Pagination Navigation">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(1)"><i class="bi bi-chevron-double-left"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === 1"><button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(pageNumber() - 1)"><i class="bi bi-chevron-left"></i></button></li>
+            @for (page of pageRange; track page) {
+              <li class="page-item" [class.active]="page === pageNumber()"><button type="button" class="page-link" (click)="onPageChange(page)">{{ page }}</button></li>
+            }
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(pageNumber() + 1)"><i class="bi bi-chevron-right"></i></button></li>
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages"><button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(totalPages)"><i class="bi bi-chevron-double-right"></i></button></li>
+          </ul>
+        </nav>
+        <div class="pagination-info">Page {{ pageNumber() }} of {{ totalPages }} ({{ totalCount() }} total)</div>
+      </div>
+    }
+  }
+</div>

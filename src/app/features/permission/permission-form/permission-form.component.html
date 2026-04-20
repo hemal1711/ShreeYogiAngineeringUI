@@ -1,0 +1,64 @@
+<div class="management-form-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="form-header">
+    <div>
+      <h1><i class="bi bi-shield-check"></i> {{ pageTitle() }}</h1>
+      <p>Configure API and UI authorization permission codes.</p>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading permission...</p>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form permission-form">
+      <div class="form-grid">
+        <div class="mb-3">
+          <label for="code" class="form-label">Code <span>*</span></label>
+          <input id="code" type="text" class="form-control" formControlName="code" [class.is-invalid]="isFieldInvalid('code')" placeholder="e.g. user.read" />
+          @if (isFieldInvalid('code')) {
+            <div class="invalid-feedback">{{ getFieldError('code') }}</div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label for="name" class="form-label">Name <span>*</span></label>
+          <input id="name" type="text" class="form-control" formControlName="name" [class.is-invalid]="isFieldInvalid('name')" placeholder="e.g. View Users" />
+          @if (isFieldInvalid('name')) {
+            <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+          }
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" rows="4" class="form-control" formControlName="description" [class.is-invalid]="isFieldInvalid('description')"></textarea>
+        @if (isFieldInvalid('description')) {
+          <div class="invalid-feedback">{{ getFieldError('description') }}</div>
+        }
+        <small class="form-text">{{ form.get('description')?.value?.length || 0 }}/500 characters</small>
+      </div>
+
+      <div class="form-check form-switch mb-4">
+        <input id="isActive" type="checkbox" class="form-check-input" formControlName="isActive" />
+        <label for="isActive" class="form-check-label">Active</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="isSubmitting()" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
+          } @else {
+            <span>{{ correlationId() ? 'Update' : 'Create' }} Permission</span>
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

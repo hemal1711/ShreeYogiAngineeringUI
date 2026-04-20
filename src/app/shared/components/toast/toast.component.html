@@ -1,0 +1,19 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="true">
+  @for (message of toastService.messages(); track message.id) {
+    <section class="app-toast" [ngClass]="'app-toast--' + message.type" role="status">
+      <i class="bi" [ngClass]="getIcon(message)"></i>
+      <div class="app-toast__content">
+        <strong>{{ message.title }}</strong>
+        <span>{{ message.message }}</span>
+        @if (message.action) {
+          <button type="button" class="app-toast__action" (click)="toastService.runAction(message)">
+            {{ message.action.label }}
+          </button>
+        }
+      </div>
+      <button type="button" class="app-toast__close" (click)="toastService.dismiss(message.id)" aria-label="Close notification">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </section>
+  }
+</div>

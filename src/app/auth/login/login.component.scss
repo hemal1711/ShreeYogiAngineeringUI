@@ -1,0 +1,179 @@
+:host {
+  display: block;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  padding: 2rem 1rem;
+  color: #f8fbff;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(44, 103, 226, 0.34), transparent 30rem),
+    linear-gradient(135deg, #071124 0%, #132052 52%, #071225 100%);
+}
+
+.login-hero {
+  text-align: center;
+}
+
+.login-hero__mark {
+  width: 3.25rem;
+  height: 3.25rem;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 0.85rem;
+  border-radius: 0.7rem;
+  background: #2f6df6;
+  box-shadow: 0 1rem 2rem rgba(47, 109, 246, 0.24);
+
+  i {
+    font-size: 1.35rem;
+  }
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0.45rem 0 0;
+  color: #8fc4ff;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.login-card {
+  width: min(100%, 22.4rem);
+  padding: 1.55rem 1.6rem 1.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.55rem;
+  background: rgba(63, 77, 121, 0.72);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.login-tabs {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-bottom: 1.35rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.login-tabs__item {
+  min-height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.35rem;
+  color: #263044;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+label {
+  color: #eef4ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  min-height: 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.45rem;
+  padding: 0 0.85rem;
+  color: #f8fbff;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+
+  &::placeholder {
+    color: rgba(235, 241, 255, 0.48);
+  }
+
+  &:focus {
+    border-color: #72a7ff;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 0.2rem rgba(47, 109, 246, 0.16);
+  }
+
+  &.is-invalid {
+    border-color: #ff9aa5;
+  }
+}
+
+.password-field {
+  position: relative;
+
+  input {
+    padding-right: 2.75rem;
+  }
+
+  button {
+    position: absolute;
+    inset: 0 0.3rem 0 auto;
+    width: 2.2rem;
+    border: 0;
+    color: rgba(235, 241, 255, 0.7);
+    background: transparent;
+  }
+}
+
+.field-error {
+  color: #ffd2d7;
+  font-size: 0.75rem;
+}
+
+.login-submit {
+  min-height: 2.4rem;
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 0.45rem;
+  color: #fff;
+  background: #2f6df6;
+  font-weight: 800;
+  box-shadow: 0 0.85rem 1.8rem rgba(47, 109, 246, 0.26);
+
+  &:hover:not(:disabled) {
+    background: #245ee4;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
+
+  .spinner-border {
+    margin-right: 0.45rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    justify-content: flex-start;
+    padding: 3rem 1rem 1.5rem;
+  }
+
+  .login-card {
+    padding: 1.25rem;
+  }
+}

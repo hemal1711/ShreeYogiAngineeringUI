@@ -1,0 +1,26 @@
+<section class="settings-page">
+  <div class="settings-page__hero">
+    <div>
+      <p class="settings-page__eyebrow">Workspace ready</p>
+      <h1>Settings</h1>
+      <p>Production settings should feel like part of the workspace, not like a temporary placeholder. This page is structured so we can plug forms and API data in without redesigning it again.</p>
+    </div>
+    <div class="settings-page__status">
+      <strong>3</strong>
+      <span>Core setting groups</span>
+    </div>
+  </div>
+
+  <div class="settings-page__grid">
+    @for (group of settingsGroups; track group.title) {
+      <article class="settings-card">
+        <div class="settings-card__header">
+          <h2>{{ group.title }}</h2>
+          <span [class.is-warning]="group.status === 'Attention needed'">{{ group.status }}</span>
+        </div>
+        <p>{{ group.description }}</p>
+        <button type="button" class="settings-card__button">Manage</button>
+      </article>
+    }
+  </div>
+</section>

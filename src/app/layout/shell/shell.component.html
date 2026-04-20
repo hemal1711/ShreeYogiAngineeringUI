@@ -1,0 +1,18 @@
+<div
+  class="shell"
+  [ngClass]="{
+    'shell--collapsed': layout.sidebarCollapsed(),
+    'shell--mobile-open': layout.mobileSidebarOpen()
+  }"
+>
+  <app-shell-header class="shell__header"></app-shell-header>
+  <app-shell-sidebar class="shell__sidebar"></app-shell-sidebar>
+  <div class="shell__main">
+    <app-shell-contentbar></app-shell-contentbar>
+    <app-shell-footer></app-shell-footer>
+  </div>
+
+  @if (layout.mobileSidebarOpen()) {
+    <button type="button" class="shell__backdrop" (click)="layout.closeMobileSidebar()" aria-label="Close sidebar"></button>
+  }
+</div>
