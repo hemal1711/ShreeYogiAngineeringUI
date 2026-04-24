@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
-import { signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -19,7 +19,9 @@ interface Breadcrumb {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BreadcrumbComponent {
-  private readonly router = inject(Router);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly router = inject(Router);
   breadcrumbs = signal<Breadcrumb[]>([]);
 
   constructor() {
@@ -28,7 +30,7 @@ export class BreadcrumbComponent {
         filter(event => event instanceof NavigationEnd),
         map(() => this.buildBreadcrumbs())
       )
-      .subscribe(breadcrumbs => {
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(breadcrumbs => {
         this.breadcrumbs.set(breadcrumbs);
       });
 

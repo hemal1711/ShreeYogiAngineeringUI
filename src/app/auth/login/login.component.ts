@@ -64,8 +64,7 @@ export class LoginComponent {
     };
 
     this.authService.login(credentials)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.loading.set(false);
           this.toastService.success('You are signed in successfully.', 'Welcome back');

@@ -36,20 +36,66 @@
             <h2>Permissions</h2>
             <span>{{ selectedPermissionIds().size }} selected</span>
           </div>
-          <div class="permission-grid">
-            @for (permission of permissions(); track permission.correlationId) {
-              <label class="permission-option">
-                <input
-                  type="checkbox"
-                  [checked]="selectedPermissionIds().has(permission.correlationId)"
-                  (change)="togglePermission(permission.correlationId)"
-                />
-                <span>
-                  <strong>{{ permission.code }}</strong>
-                  <small>{{ permission.name }}</small>
-                </span>
-              </label>
-            }
+
+          <div class="permission-matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>Permission Name</th>
+                  @for (action of permissionActions; track action) {
+                    <th>{{ getPermissionActionLabel(action) }}</th>
+                  }
+                  <th>Other</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of permissionMatrix(); track row.module) {
+                  <tr>
+                    <td>
+                      <strong>{{ row.moduleLabel }}</strong>
+                      <small>{{ row.module }}</small>
+                    </td>
+
+                    @for (action of permissionActions; track action) {
+                      @let permission = getActionPermission(row, action);
+                      <td>
+                        @if (permission) {
+                          <label class="permission-matrix__check" [title]="permission.name">
+                            <input
+                              type="checkbox"
+                              [checked]="selectedPermissionIds().has(permission.correlationId)"
+                              (change)="togglePermission(permission.correlationId)"
+                            />
+                            <span>{{ permission.name }}</span>
+                          </label>
+                        } @else {
+                          <span class="permission-matrix__empty">-</span>
+                        }
+                      </td>
+                    }
+
+                    <td>
+                      @if (row.otherActions.length > 0) {
+                        <div class="permission-matrix__other">
+                          @for (permission of row.otherActions; track permission.correlationId) {
+                            <label [title]="permission.name">
+                              <input
+                                type="checkbox"
+                                [checked]="selectedPermissionIds().has(permission.correlationId)"
+                                (change)="togglePermission(permission.correlationId)"
+                              />
+                              <span>{{ permission.code }}</span>
+                            </label>
+                          }
+                        </div>
+                      } @else {
+                        <span class="permission-matrix__empty">-</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </section>
       }

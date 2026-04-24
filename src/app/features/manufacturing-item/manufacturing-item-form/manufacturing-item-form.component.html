@@ -1,0 +1,20 @@
+<div class="management-form-page">
+  <app-breadcrumb></app-breadcrumb>
+  <div class="form-header"><div><h1><i class="bi bi-box-seam"></i> {{ pageTitle() }}</h1><p>Store item photo as a URL while the image file is saved by the API.</p></div></div>
+  @if (isLoading()) { <div class="loading-state"><div class="spinner-border text-primary"></div><p>Loading item...</p></div> }
+  @if (!isLoading()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form item-form">
+      <div class="form-grid">
+        <div class="mb-3"><label class="form-label" for="itemCode">Item Code <span>*</span></label><input id="itemCode" class="form-control" formControlName="itemCode" placeholder="e.g. TX-5053" [class.is-invalid]="isFieldInvalid('itemCode')" />@if (isFieldInvalid('itemCode')) { <div class="invalid-feedback">{{ getFieldError('itemCode') }}</div> }</div>
+        <div class="mb-3"><label class="form-label" for="itemName">Item Name <span>*</span></label><input id="itemName" class="form-control" formControlName="itemName" [class.is-invalid]="isFieldInvalid('itemName')" />@if (isFieldInvalid('itemName')) { <div class="invalid-feedback">{{ getFieldError('itemName') }}</div> }</div>
+        <div class="mb-3"><label class="form-label" for="customerCorrelationId">Customer <span>*</span></label><select id="customerCorrelationId" class="form-select" formControlName="customerCorrelationId" [class.is-invalid]="isFieldInvalid('customerCorrelationId')"><option value="">Select customer</option>@for (customer of customers(); track customer.correlationId) { <option [value]="customer.correlationId">{{ customer.customerName }} ({{ customer.code }})</option> }</select></div>
+        <div class="mb-3"><label class="form-label" for="unit">Unit</label><select id="unit" class="form-select" formControlName="unit"><option value="PCS">PCS</option><option value="KG">KG</option><option value="SET">SET</option><option value="NOS">NOS</option></select></div>
+        <div class="mb-3"><label class="form-label" for="lowStockThreshold">Low Stock Threshold</label><input id="lowStockThreshold" type="number" min="0" step="0.01" class="form-control" formControlName="lowStockThreshold" /></div>
+      </div>
+      <div class="mb-3"><label class="form-label" for="description">Description</label><textarea id="description" rows="3" class="form-control" formControlName="description"></textarea></div>
+      <div class="mb-3"><label class="form-label" for="photo">Item Photo</label><label class="photo-upload" for="photo"><i class="bi bi-camera"></i><span>{{ selectedPhoto()?.name || 'Tap to take photo or upload' }}</span><small>Camera opens on supported mobile browsers</small></label><input id="photo" type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)" hidden />@if (selectedPhotoPreviewUrl()) { <img class="photo-preview" [src]="selectedPhotoPreviewUrl()!" alt="Selected item photo" /> } @else if (currentPhotoUrl()) { <img class="photo-preview" [src]="getPhotoUrl(currentPhotoUrl())" alt="Current item photo" /> }</div>
+      <div class="form-check form-switch mb-4"><input id="isActive" type="checkbox" class="form-check-input" formControlName="isActive" /><label for="isActive" class="form-check-label">Active</label></div>
+      <div class="form-actions"><button type="button" class="btn btn-outline-secondary" [disabled]="isSubmitting()" (click)="onCancel()">Cancel</button><button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">@if (isSubmitting()) { <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span> } @else { <span>Save</span> }</button></div>
+    </form>
+  }
+</div>

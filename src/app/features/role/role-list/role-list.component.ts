@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -18,7 +19,9 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RoleListComponent {
-  private readonly accessControlService = inject(AccessControlService);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly accessControlService = inject(AccessControlService);
   private readonly permissionService = inject(PermissionService);
   private readonly dialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
@@ -55,7 +58,7 @@ export class RoleListComponent {
 
   loadRoles(): void {
     this.isLoading.set(true);
-    this.accessControlService.getRoles(this.pageNumber(), this.pageSize(), this.searchTerm).subscribe({
+    this.accessControlService.getRoles(this.pageNumber(), this.pageSize(), this.searchTerm).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const data = response.data as PagedResponse<Role> | undefined;
         const roles = (data?.items ?? []).filter((role) => !role.isSystemRole);
@@ -87,6 +90,9 @@ export class RoleListComponent {
     this.pageNumber.set(page);
     this.loadRoles();
   }
+  exportCsv(): void {
+    this.downloadCsv('roles.csv', [['Role','Status','Created'], ...this.roles().map(x => [x.roleName, x.isActive ? 'Active' : 'Inactive', x.createdOn])]);
+  }
 
   onDelete(role: Role): void {
     this.dialogService.showDelete('role').then((confirmed) => {
@@ -94,7 +100,7 @@ export class RoleListComponent {
         return;
       }
       this.deletingId.set(role.correlationId);
-      this.accessControlService.deleteRole(role.correlationId).subscribe({
+      this.accessControlService.deleteRole(role.correlationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.deletingId.set(null);
           this.toastService.success(`${role.roleName} deleted successfully.`, 'Role deleted');
@@ -111,4 +117,5 @@ export class RoleListComponent {
   getStatusBadge(isActive: boolean): { class: string; text: string } {
     return isActive ? { class: 'badge-success', text: 'Active' } : { class: 'badge-danger', text: 'Inactive' };
   }
+  private downloadCsv(fileName: string, rows: string[][]): void { const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); }
 }

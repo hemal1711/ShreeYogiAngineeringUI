@@ -1,0 +1,19 @@
+<div class="management-form-page">
+  <app-breadcrumb></app-breadcrumb>
+  <div class="form-header"><div><h1><i class="bi bi-buildings"></i> {{ pageTitle() }}</h1><p>Maintain customer names, codes, and contact details.</p></div></div>
+  @if (isLoading()) { <div class="loading-state"><div class="spinner-border text-primary"></div><p>Loading customer...</p></div> }
+  @if (!isLoading()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form customer-form">
+      <div class="form-grid">
+        <div class="mb-3"><label for="customerName" class="form-label">Customer Name <span>*</span></label><input id="customerName" class="form-control" formControlName="customerName" [class.is-invalid]="isFieldInvalid('customerName')" />@if (isFieldInvalid('customerName')) { <div class="invalid-feedback">{{ getFieldError('customerName') }}</div> }</div>
+        <div class="mb-3"><label for="code" class="form-label">Code <span>*</span></label><input id="code" class="form-control" formControlName="code" placeholder="Short code e.g. C&A" [class.is-invalid]="isFieldInvalid('code')" />@if (isFieldInvalid('code')) { <div class="invalid-feedback">{{ getFieldError('code') }}</div> }</div>
+        <div class="mb-3"><label for="contactPerson" class="form-label">Contact Person</label><input id="contactPerson" class="form-control" formControlName="contactPerson" [class.is-invalid]="isFieldInvalid('contactPerson')" /></div>
+        <div class="mb-3"><label for="phone" class="form-label">Phone</label><input id="phone" class="form-control" formControlName="phone" [class.is-invalid]="isFieldInvalid('phone')" /></div>
+        <div class="mb-3"><label for="email" class="form-label">Email</label><input id="email" type="email" class="form-control" formControlName="email" [class.is-invalid]="isFieldInvalid('email')" />@if (isFieldInvalid('email')) { <div class="invalid-feedback">{{ getFieldError('email') }}</div> }</div>
+        <div class="mb-3"><label for="address" class="form-label">Address</label><input id="address" class="form-control" formControlName="address" [class.is-invalid]="isFieldInvalid('address')" /></div>
+      </div>
+      <div class="form-check form-switch mb-4"><input id="isActive" type="checkbox" class="form-check-input" formControlName="isActive" /><label for="isActive" class="form-check-label">Active</label></div>
+      <div class="form-actions"><button type="button" class="btn btn-outline-secondary" [disabled]="isSubmitting()" (click)="onCancel()">Cancel</button><button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">@if (isSubmitting()) { <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span> } @else { <span>Save</span> }</button></div>
+    </form>
+  }
+</div>

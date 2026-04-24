@@ -1,10 +1,22 @@
 :root {
   color-scheme: light;
+  --sp-page-gutter: clamp(0.75rem, 1.7vw, 1.8rem);
+  --sp-section-gap: clamp(0.75rem, 1.4vw, 1.25rem);
   --sp-background: #f4f7fb;
-  --sp-surface: rgba(255, 255, 255, 0.9);
+  --sp-surface: #ffffff;
   --sp-text: #13233d;
   --sp-muted: #5d6b88;
-  --sp-border: rgba(15, 23, 42, 0.08);
+  --sp-border: #dce3ee;
+  --sp-border-soft: rgba(15, 23, 42, 0.08);
+  --sp-primary: #2563eb;
+  --sp-primary-hover: #1d4ed8;
+  --sp-primary-soft: #eef4ff;
+  --sp-danger: #dc3545;
+  --sp-radius: 0.75rem;
+  --sp-radius-sm: 0.5rem;
+  --sp-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  --sp-shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.06);
+  --sp-touch-target: 2.75rem;
 }
 
 *,
@@ -16,11 +28,12 @@
 html,
 body {
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--sp-text);
   background: var(--sp-background);
   text-rendering: optimizeLegibility;
@@ -34,12 +47,32 @@ select {
   font: inherit;
 }
 
+button,
+select,
+a {
+  touch-action: manipulation;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
 a {
   color: inherit;
 }
 
 .btn {
+  min-height: 2.5rem;
   transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.form-control,
+.form-select,
+.btn {
+  max-width: 100%;
 }
 
 .btn:focus-visible,
@@ -48,6 +81,21 @@ a {
 a:focus-visible {
   outline: 3px solid rgba(13, 110, 253, 0.2);
   outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --sp-page-gutter: 0;
+    --sp-section-gap: 0.75rem;
+    --sp-radius: 0;
+    --sp-radius-sm: 0.45rem;
+  }
+
+  .btn,
+  .form-control,
+  .form-select {
+    min-height: var(--sp-touch-target);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

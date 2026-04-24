@@ -2,14 +2,20 @@
   class="shell-sidebar"
   [ngClass]="{ 'shell-sidebar--collapsed': layout.sidebarCollapsed() && !layout.mobileSidebarOpen() }"
 >
-  <div class="shell-sidebar__profile">
-    <div class="shell-sidebar__avatar">DA</div>
+  <div class="shell-sidebar__brand">
+    <div class="shell-sidebar__mark">SY</div>
 
     @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
       <div class="shell-sidebar__identity">
-        <strong>{{ currentUser()?.email || 'user@workspace.local' }}</strong>
-        <span>{{ currentUser()?.fullName ?? 'Workspace User' }}</span>
+        <strong>Shree Yogi</strong>
+        <span>Engineering System</span>
       </div>
+    }
+
+    @if (layout.mobileSidebarOpen()) {
+      <button type="button" class="shell-sidebar__close" (click)="layout.closeMobileSidebar()" aria-label="Close sidebar" title="Close sidebar">
+        <i class="bi bi-x-lg"></i>
+      </button>
     }
   </div>
 
@@ -17,7 +23,7 @@
     @if (hasVisibleItems(section)) {
     <section class="shell-sidebar__section">
       @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
-        <h2>{{ section.title }}</h2>
+        <!-- <h2>{{ section.title }}</h2> -->
       }
 
       <ul>
@@ -30,6 +36,7 @@
                 class="shell-sidebar__item shell-sidebar__item--button"
                 [ngClass]="{ 'is-active': hasActiveChild(item), 'is-expanded': isExpanded(item.label) }"
                 (click)="toggleSection(item.label)"
+                [attr.title]="layout.sidebarCollapsed() && !layout.mobileSidebarOpen() ? item.label : null"
               >
                 <span><i [class]="'bi ' + item.icon"></i> <em>{{ item.label }}</em></span>
                 @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
@@ -46,6 +53,9 @@
                       [ngClass]="{ 'is-active': isActive(child.link) }"
                       (click)="closeMobileSidebar()"
                     >
+                      @if (child.icon) {
+                        <i [class]="'bi ' + child.icon"></i>
+                      }
                       {{ child.label }}
                     </a>
                     }
@@ -59,6 +69,7 @@
                 routerLinkActive="is-active"
                 [routerLinkActiveOptions]="{ exact: true }"
                 (click)="closeMobileSidebar()"
+                [attr.title]="layout.sidebarCollapsed() && !layout.mobileSidebarOpen() ? item.label : null"
               >
                 <span><i [class]="'bi ' + item.icon"></i> <em>{{ item.label }}</em></span>
               </a>

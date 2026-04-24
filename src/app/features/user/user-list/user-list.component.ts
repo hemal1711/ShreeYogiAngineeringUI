@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -18,7 +19,9 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserListComponent {
-  private readonly accessControlService = inject(AccessControlService);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly accessControlService = inject(AccessControlService);
   private readonly permissionService = inject(PermissionService);
   private readonly dialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
@@ -55,7 +58,7 @@ export class UserListComponent {
 
   loadUsers(): void {
     this.isLoading.set(true);
-    this.accessControlService.getUsers(this.pageNumber(), this.pageSize(), this.searchTerm).subscribe({
+    this.accessControlService.getUsers(this.pageNumber(), this.pageSize(), this.searchTerm).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const data = response.data as PagedResponse<User> | undefined;
         const items = (data?.items ?? []).filter((user) => !this.isSuperAdminUser(user));
@@ -87,6 +90,9 @@ export class UserListComponent {
     this.pageNumber.set(page);
     this.loadUsers();
   }
+  exportCsv(): void {
+    this.downloadCsv('users.csv', [['User','Email','Full Name','Phone','Status'], ...this.users().map(x => [x.userName, x.email || '', this.getFullName(x), x.phoneNumber || '', x.isActive ? 'Active' : 'Inactive'])]);
+  }
 
   onDelete(user: User): void {
     this.dialogService.showDelete('user').then((confirmed) => {
@@ -94,7 +100,7 @@ export class UserListComponent {
         return;
       }
       this.deletingId.set(user.correlationId);
-      this.accessControlService.deleteUser(user.correlationId).subscribe({
+      this.accessControlService.deleteUser(user.correlationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.deletingId.set(null);
           this.toastService.success(`${user.userName} deleted successfully.`, 'User deleted');
@@ -119,4 +125,5 @@ export class UserListComponent {
   private isSuperAdminUser(user: User): boolean {
     return user.userName.trim().toLowerCase() === 'superadmin';
   }
+  private downloadCsv(fileName: string, rows: string[][]): void { const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ShellHeaderComponent } from '../shell-header/shell-header.component';
 import { ShellSidebarComponent } from '../shell-sidebar/shell-sidebar.component';

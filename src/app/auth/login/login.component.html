@@ -1,17 +1,13 @@
 <main class="login-page">
   <section class="login-hero" aria-labelledby="login-title">
     <div class="login-hero__mark" aria-hidden="true">
-      <i class="bi bi-box-seam"></i>
+      <i class="bi bi-box"></i>
     </div>
     <h1 id="login-title">Shree Yogi Engineering</h1>
     <p>Engineering Management System</p>
   </section>
 
   <section class="login-card" aria-label="Sign in form">
-    <div class="login-tabs" aria-hidden="true">
-      <span class="login-tabs__item login-tabs__item--active">Sign In</span>
-    </div>
-
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
       <div class="form-field">
         <label for="identifier">Email</label>

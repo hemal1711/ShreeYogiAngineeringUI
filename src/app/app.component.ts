@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { PageTitleService } from './core/services/page-title.service';
 import { AppLoaderComponent } from './shared/app-loader/app-loader.component';
@@ -13,7 +13,9 @@ import { ToastComponent } from './shared/components/toast';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private readonly pageTitleService: PageTitleService) {
+  private readonly pageTitleService = inject(PageTitleService);
+
+  constructor() {
     this.pageTitleService.init();
   }
 }

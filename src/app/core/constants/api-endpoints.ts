@@ -19,6 +19,38 @@ export const API_ENDPOINTS = {
     remove: (roleCorrelationId: string, permissionCorrelationId: string) =>
       `/rolepermissions/role/${roleCorrelationId}/permission/${permissionCorrelationId}`
   },
+  customers: {
+    list: '/customers',
+    byId: (correlationId: string) => `/customers/${correlationId}`
+  },
+  fasteners: {
+    list: '/fasteners',
+    byId: (correlationId: string) => `/fasteners/${correlationId}`
+  },
+  instruments: {
+    list: '/instruments',
+    byId: (correlationId: string) => `/instruments/${correlationId}`
+  },
+  instrumentIssues: {
+    list: '/instrumentissues',
+    byId: (correlationId: string) => `/instrumentissues/${correlationId}`
+  },
+  manufacturingItems: {
+    list: '/manufacturingitems',
+    byId: (correlationId: string) => `/manufacturingitems/${correlationId}`
+  },
+  manufacturingOperations: {
+    list: '/manufacturingoperations',
+    byId: (correlationId: string) => `/manufacturingoperations/${correlationId}`
+  },
+  toolingItems: {
+    list: '/toolingitems',
+    byId: (correlationId: string) => `/toolingitems/${correlationId}`
+  },
+  toolingOperations: {
+    list: '/toolingoperations',
+    byId: (correlationId: string) => `/toolingoperations/${correlationId}`
+  },
   users: {
     list: '/users',
     byId: (correlationId: string) => `/users/${correlationId}`,

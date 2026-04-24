@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,7 +17,9 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PermissionFormComponent {
-  private readonly formBuilder = inject(FormBuilder);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly formBuilder = inject(FormBuilder);
   private readonly accessControlService = inject(AccessControlService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -62,7 +65,7 @@ export class PermissionFormComponent {
     const operation = id ? this.accessControlService.updatePermission(id, request) : this.accessControlService.createPermission(request);
 
     this.isSubmitting.set(true);
-    operation.subscribe({
+    operation.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.toastService.success(id ? 'Permission updated successfully.' : 'Permission created successfully.', 'Permission saved');
@@ -110,7 +113,7 @@ export class PermissionFormComponent {
 
   private loadPermission(correlationId: string): void {
     this.isLoading.set(true);
-    this.accessControlService.getPermission(correlationId).subscribe({
+    this.accessControlService.getPermission(correlationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const permission = response.data;
         if (permission) {

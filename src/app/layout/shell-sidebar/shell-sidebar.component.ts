@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -11,7 +12,7 @@ interface MenuItem {
   icon: string;
   link?: string;
   permissions?: readonly string[];
-  children?: readonly { label: string; link: string; permissions?: readonly string[] }[];
+  children?: readonly { label: string; icon?: string; link: string; permissions?: readonly string[] }[];
 }
 
 interface MenuSection {
@@ -28,6 +29,7 @@ interface MenuSection {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShellSidebarComponent {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);
   private readonly permissionService = inject(PermissionService);
   private readonly router = inject(Router);
@@ -37,64 +39,74 @@ export class ShellSidebarComponent {
 
   readonly sections: readonly MenuSection[] = [
     {
-      title: 'Main',
+      title: 'Workspace',
       items: [
         { label: 'Dashboard', icon: 'bi-grid', link: '/dashboard' },
-        { label: 'Bookings', icon: 'bi-calendar-check', link: '/bookings', permissions: ['booking.read'] }
-      ]
-    },
-    {
-      title: 'Service',
-      items: [
         {
-          label: 'Services',
-          icon: 'bi-briefcase',
-          permissions: ['service.read', 'service.create'],
+          label: 'Admin',
+          icon: 'bi-gear',
+          permissions: ['role.read', 'permission.read', 'rolepermission.read', 'user.read', 'userrole.read'],
           children: [
-            { label: 'Service Catalog', link: '/services', permissions: ['service.read'] },
-            { label: 'Add Service', link: '/services/add', permissions: ['service.create'] }
+            { label: 'Roles', icon: 'bi-shield', link: '/roles', permissions: ['role.read'] },
+            { label: 'Permissions', icon: 'bi-key', link: '/permissions', permissions: ['permission.read'] },
+            { label: 'Role Permissions', icon: 'bi-key', link: '/role-permissions', permissions: ['rolepermission.read'] },
+            { label: 'Users', icon: 'bi-people', link: '/users', permissions: ['user.read'] },
+            { label: 'Role Users', icon: 'bi-person-check', link: '/user-roles', permissions: ['userrole.read'] }
           ]
         }
       ]
     },
     {
-      title: 'Custom Job',
+      title: 'Customers',
       items: [
-        { label: 'Job Request List', icon: 'bi-card-list', link: '/job-requests', permissions: ['jobrequest.read'] },
-        { label: 'Job Service List', icon: 'bi-list-task', link: '/job-services', permissions: ['jobservice.read'] }
+        { label: 'Customers', icon: 'bi-buildings', link: '/customers', permissions: ['customer.read'] }
       ]
     },
     {
-      title: 'User',
+      title: 'Manufacturing',
       items: [
         {
-          label: 'Users',
-          icon: 'bi-person',
-          permissions: ['user.read', 'user.create'],
+          label: 'Mfg. Items',
+          icon: 'bi-box-seam',
+          permissions: ['manufacturingitem.read', 'manufacturingitem.create', 'manufacturingoperation.read'],
           children: [
-            { label: 'User Directory', link: '/users', permissions: ['user.read'] },
-            { label: 'Add User', link: '/users/add', permissions: ['user.create'] }
+            { label: 'Mfg. Items', icon: 'bi-box-seam', link: '/manufacturing-items', permissions: ['manufacturingitem.read'] },
+            { label: 'Mfg. Operations', icon: 'bi-box-seam', link: '/manufacturing-operations', permissions: ['manufacturingoperation.read'] },
+            { label: 'Stock (Party-wise)', icon: 'bi-clipboard-data', link: '/manufacturing-stock', permissions: ['manufacturingoperation.read'] },
+            { label: 'Add Mfg. Item', icon: 'bi-plus-circle', link: '/manufacturing-items/add', permissions: ['manufacturingitem.create'] }
           ]
-        },
+        }
+      ]
+    },
+    {
+      title: 'Tooling',
+      items: [
         {
-          label: 'Roles',
-          icon: 'bi-person-badge',
-          permissions: ['role.read', 'role.create'],
+          label: 'Tooling Items',
+          icon: 'bi-wrench',
+          permissions: ['toolingitem.read', 'toolingitem.create', 'toolingoperation.read'],
           children: [
-            { label: 'Role List', link: '/roles', permissions: ['role.read'] },
-            { label: 'Add Role', link: '/roles/add', permissions: ['role.create'] }
+            { label: 'Tooling Items', icon: 'bi-wrench', link: '/tooling-items', permissions: ['toolingitem.read'] },
+            { label: 'Tooling Ops', icon: 'bi-wrench', link: '/tooling-operations', permissions: ['toolingoperation.read'] },
+            { label: 'Stock (Party-wise)', icon: 'bi-clipboard-data', link: '/tooling-stock', permissions: ['toolingoperation.read'] },
+            { label: 'Add Tooling Item', icon: 'bi-plus-circle', link: '/tooling-items/add', permissions: ['toolingitem.create'] }
           ]
-        },
+        }
+      ]
+    },
+    {
+      title: 'System',
+      items: [
+        { label: 'Fasteners', icon: 'bi-hexagon', link: '/fasteners', permissions: ['fastener.read'] },
         {
-          label: 'Permissions',
-          icon: 'bi-shield-check',
-          permissions: ['permission.read', 'permission.create'],
+          label: 'Instruments',
+          icon: 'bi-rulers',
+          permissions: ['instrument.read', 'instrumentissue.read'],
           children: [
-            { label: 'Permission List', link: '/permissions', permissions: ['permission.read'] },
-            { label: 'Add Permission', link: '/permissions/add', permissions: ['permission.create'] }
+            { label: 'Instruments', icon: 'bi-rulers', link: '/instruments', permissions: ['instrument.read'] },
+            { label: 'Instrument Issues', icon: 'bi-clipboard-check', link: '/instrument-issues', permissions: ['instrumentissue.read'] }
           ]
         },
-        { label: 'User Roles', icon: 'bi-person-check', link: '/user-roles', permissions: ['userrole.read'] },
         { label: 'Settings', icon: 'bi-gear', link: '/settings', permissions: ['settings.read'] }
       ]
     }
@@ -103,6 +115,7 @@ export class ShellSidebarComponent {
   constructor() {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.syncExpandedMenus());
 
     this.syncExpandedMenus();

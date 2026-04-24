@@ -4,11 +4,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .text-truncate {
   display: inline-block;
-  max-width: 24rem;
+  max-width: min(24rem, 60vw);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -64,8 +66,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.45rem;
+  height: 1.45rem;
   border: 2px solid #cbd3e6;
   border-radius: 0.25rem;
   background: #fff;
@@ -132,5 +134,13 @@
   .permission-action-col,
   .permission-action-cell {
     min-width: 10rem;
+  }
+
+  .permission-toolbar {
+    align-items: stretch;
+  }
+
+  .text-truncate {
+    max-width: 16rem;
   }
 }

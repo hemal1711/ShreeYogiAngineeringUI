@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +12,15 @@ import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.compo
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
 
+type PermissionAction = 'create' | 'read' | 'update' | 'delete';
+
+interface PermissionMatrixRow {
+  module: string;
+  moduleLabel: string;
+  actions: Partial<Record<PermissionAction, Permission>>;
+  otherActions: Permission[];
+}
+
 @Component({
   selector: 'app-role-form',
   standalone: true,
@@ -20,7 +30,9 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RoleFormComponent {
-  private readonly formBuilder = inject(FormBuilder);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly formBuilder = inject(FormBuilder);
   private readonly accessControlService = inject(AccessControlService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -40,6 +52,8 @@ export class RoleFormComponent {
   readonly canReadPermissions = this.permissionService.has('permission.read');
   readonly canReadRolePermissions = this.permissionService.has('rolepermission.read');
   readonly canShowPermissionPicker = this.canReadPermissions && this.canReadRolePermissions && this.canManagePermissions;
+  readonly permissionActions: PermissionAction[] = ['create', 'read', 'update', 'delete'];
+  readonly permissionMatrix = computed<PermissionMatrixRow[]>(() => this.buildPermissionMatrix(this.permissions()));
 
   constructor() {
     this.form = this.formBuilder.group({
@@ -55,9 +69,21 @@ export class RoleFormComponent {
 
   togglePermission(permissionId: string): void {
     const next = new Set(this.selectedPermissionIds());
-    next.has(permissionId) ? next.delete(permissionId) : next.add(permissionId);
+    if (next.has(permissionId)) {
+      next.delete(permissionId);
+    } else {
+      next.add(permissionId);
+    }
     this.selectedPermissionIds.set(next);
     this.form.markAsDirty();
+  }
+
+  getActionPermission(row: PermissionMatrixRow, action: PermissionAction): Permission | undefined {
+    return row.actions[action];
+  }
+
+  getPermissionActionLabel(action: PermissionAction): string {
+    return action.charAt(0).toUpperCase() + action.slice(1);
   }
 
   onSubmit(): void {
@@ -83,7 +109,7 @@ export class RoleFormComponent {
         }
         return this.savePermissions(roleId).pipe(switchMap(() => of(response)));
       })
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.toastService.success(id ? 'Role updated successfully.' : 'Role created successfully.', 'Role saved');
@@ -135,7 +161,7 @@ export class RoleFormComponent {
     const role$ = roleId ? this.accessControlService.getRole(roleId) : of(null);
     const assigned$ = roleId && this.canShowPermissionPicker ? this.accessControlService.getRolePermissionIds(roleId) : of(null);
 
-    forkJoin({ permissions: permissions$, role: role$, assigned: assigned$ }).subscribe({
+    forkJoin({ permissions: permissions$, role: role$, assigned: assigned$ }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ permissions, role, assigned }) => {
         const permissionItems = (permissions?.data as PagedResponse<Permission> | undefined)?.items ?? [];
         this.permissions.set(permissionItems);
@@ -178,5 +204,42 @@ export class RoleFormComponent {
     removed.forEach((permissionId) => operations.push(this.accessControlService.removeRolePermission(roleCorrelationId, permissionId)));
 
     return operations.length > 0 ? forkJoin(operations) : of([]);
+  }
+
+  private buildPermissionMatrix(permissions: Permission[]): PermissionMatrixRow[] {
+    const rows = new Map<string, PermissionMatrixRow>();
+
+    [...permissions]
+      .sort((first, second) => first.code.localeCompare(second.code))
+      .forEach((permission) => {
+        const [modulePart, actionPart = ''] = permission.code.split('.');
+        const module = modulePart || permission.code;
+        const action = actionPart.toLowerCase() as PermissionAction;
+
+        if (!rows.has(module)) {
+          rows.set(module, {
+            module,
+            moduleLabel: this.formatModuleName(module),
+            actions: {},
+            otherActions: []
+          });
+        }
+
+        const row = rows.get(module)!;
+        if (this.permissionActions.includes(action)) {
+          row.actions[action] = permission;
+        } else {
+          row.otherActions.push(permission);
+        }
+      });
+
+    return Array.from(rows.values());
+  }
+
+  private formatModuleName(module: string): string {
+    return module
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 }

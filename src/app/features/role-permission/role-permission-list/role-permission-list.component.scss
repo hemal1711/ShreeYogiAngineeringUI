@@ -1,0 +1,45 @@
+@use '../../shared-management';
+
+.assignment-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(12rem, 1fr)) auto;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius);
+  background: var(--sp-surface);
+  box-shadow: var(--sp-shadow);
+}
+
+.assignment-panel .btn,
+.assignment-panel .form-select {
+  min-height: var(--sp-touch-target);
+}
+
+.text-truncate {
+  display: inline-block;
+  max-width: min(32rem, 58vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .assignment-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .assignment-panel .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .assignment-panel {
+    border-inline: 0;
+  }
+
+  .text-truncate {
+    max-width: 16rem;
+  }
+}

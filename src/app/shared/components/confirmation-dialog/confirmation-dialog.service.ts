@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { ConfirmationDialogConfig } from './confirmation-dialog.component';
 
 export interface DialogState {
@@ -42,7 +42,7 @@ export class ConfirmationDialogService {
    * @param count Number of items (optional)
    * @returns Promise<boolean>
    */
-  showDelete(itemName: string, count: number = 1): Promise<boolean> {
+  showDelete(itemName: string, count = 1): Promise<boolean> {
     const config: ConfirmationDialogConfig = {
       title: count > 1 ? 'Delete Multiple Items?' : 'Delete This Item?',
       message: count > 1

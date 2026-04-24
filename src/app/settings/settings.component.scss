@@ -1,13 +1,15 @@
 .settings-page {
   display: grid;
-  gap: 1rem;
+  gap: var(--sp-section-gap);
+  min-width: 0;
 }
 
 .settings-page__hero,
 .settings-card {
-  border-radius: 1.25rem;
-  background: #fff;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius);
+  background: var(--sp-surface);
+  box-shadow: var(--sp-shadow);
 }
 
 .settings-page__hero {
@@ -15,7 +17,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: clamp(1rem, 1.8vw, 1.5rem);
 }
 
 .settings-page__eyebrow {
@@ -40,7 +42,7 @@
 }
 
 .settings-page__status {
-  min-width: 9rem;
+  min-width: min(9rem, 100%);
   padding: 1rem 1.1rem;
   border-radius: 1rem;
   background: linear-gradient(135deg, #5f5ad1 0%, #7781ff 100%);
@@ -58,12 +60,12 @@
 
 .settings-page__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
   gap: 1rem;
 }
 
 .settings-card {
-  padding: 1.35rem 1.4rem;
+  padding: clamp(1rem, 1.6vw, 1.4rem);
 }
 
 .settings-card__header {
@@ -101,8 +103,9 @@
 }
 
 .settings-card__button {
+  min-height: var(--sp-touch-target);
   border: 0;
-  border-radius: 0.85rem;
+  border-radius: var(--sp-radius-sm);
   padding: 0.7rem 1rem;
   background: #f4f6fc;
   color: #5f5ad1;
@@ -110,12 +113,19 @@
 }
 
 @media (max-width: 960px) {
-  .settings-page__grid {
-    grid-template-columns: 1fr;
-  }
-
   .settings-page__hero {
     flex-direction: column;
     align-items: start;
+  }
+
+  .settings-page__status {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-page__hero,
+  .settings-card {
+    border-inline: 0;
   }
 }

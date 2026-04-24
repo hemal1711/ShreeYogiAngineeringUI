@@ -32,6 +32,15 @@
     </form>
   }
 
+  <div class="toolbar user-role-toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input class="form-control" type="text" placeholder="Search user or role..." [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" />
+      <button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onSearch()">Search</button>
+    </div>
+    <button type="button" class="btn btn-outline-primary" (click)="exportCsv()"><i class="bi bi-download"></i> Export CSV</button>
+  </div>
+
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner-border text-primary"></div>

@@ -1,27 +1,40 @@
 <header class="shell-header">
   <div class="shell-header__left">
-    <button type="button" class="shell-header__toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar">
-      <i class="bi bi-list"></i>
+    <button
+      type="button"
+      class="shell-header__toggle"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="layout.sidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'"
+      [attr.title]="layout.sidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'"
+    >
+      <i class="bi" [class.bi-list]="layout.sidebarCollapsed()" [class.bi-layout-sidebar-inset]="!layout.sidebarCollapsed()"></i>
     </button>
 
-    <div class="shell-header__brand">
-      <div class="shell-header__logo">
-        <i class="bi bi-house-door-fill"></i>
-      </div>
-      @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
-        <span>Shree Yogi Engineering</span>
-      }
+    <div class="shell-header__title">
+      <strong>{{ pageTitle() }}</strong>
+      <span class="shell-header__subtitle">
+        <b>Shree Yogi Engineering System</b>
+        <em>{{ currentRoute() }}</em>
+      </span>
     </div>
   </div>
 
   <div class="shell-header__actions">
+    <button type="button" class="shell-header__icon-button" aria-label="Toggle theme">
+      <i class="bi bi-moon"></i>
+    </button>
+    <button type="button" class="shell-header__icon-button shell-header__notification" aria-label="Notifications">
+      <i class="bi bi-bell"></i>
+      <span>9+</span>
+    </button>
+
     @if (currentUser(); as user) {
       <div class="shell-header__menu">
         <button type="button" class="shell-header__profile" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
           <div class="shell-header__avatar">{{ initials() }}</div>
           <div class="shell-header__identity">
-            <strong>{{ user.fullName | uppercase }}</strong>
-            <small>{{ user.email }}</small>
+            <strong>{{ user.fullName || user.userName || 'Admin User' }}</strong>
+            <small>{{ user.roles[0] || 'Admin' }}</small>
           </div>
           <i class="bi bi-chevron-down shell-header__profile-caret" [class.shell-header__profile-caret--open]="menuOpen()"></i>
         </button>

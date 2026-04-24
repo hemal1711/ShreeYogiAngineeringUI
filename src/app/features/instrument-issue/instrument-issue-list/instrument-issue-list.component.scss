@@ -1,0 +1,3 @@
+@use '../../manufacturing-operation/manufacturing-operation-list/manufacturing-operation-list.component';
+.pending-pill { display: inline-flex; margin-left: .5rem; padding: .2rem .55rem; border-radius: 999px; background: #ffedd5; color: #ea580c; font-size: .85rem; font-weight: 800; }
+.badge-warning { background: #ffedd5; color: #c2410c; }

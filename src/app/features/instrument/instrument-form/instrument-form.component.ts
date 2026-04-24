@@ -1,0 +1,25 @@
+import { CommonModule } from '@angular/common';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
+import { Instrument, InstrumentRequest } from '../../../core/models/access-control.model';
+import { AccessControlService } from '../../../core/services/access-control.service';
+import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
+import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
+import { ToastService } from '../../../shared/components/toast';
+
+@Component({ selector: 'app-instrument-form', standalone: true, imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent], templateUrl: './instrument-form.component.html', styleUrl: './instrument-form.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
+export class InstrumentFormComponent {
+  private readonly destroyRef = inject(DestroyRef); private readonly fb = inject(FormBuilder); private readonly service = inject(AccessControlService); private readonly router = inject(Router); private readonly route = inject(ActivatedRoute); private readonly dialogService = inject(ConfirmationDialogService); private readonly toastService = inject(ToastService);
+  readonly isLoading = signal(false); readonly isSubmitting = signal(false); readonly correlationId = signal<string | null>(null); readonly pageTitle = signal('Add Instrument'); readonly selectedPhoto = signal<File | null>(null); readonly selectedPhotoPreviewUrl = signal<string | null>(null); readonly currentPhotoUrl = signal<string | null>(null);
+  form = this.fb.group({ code: ['', [Validators.required, Validators.maxLength(100)]], instrumentName: ['', [Validators.required, Validators.maxLength(200)]], category: ['', Validators.maxLength(150)], makeBrand: ['', Validators.maxLength(200)], serialNo: ['', Validators.maxLength(150)], calibrationDueDate: [''], currentStock: [1, [Validators.required, Validators.min(0)]], location: ['', Validators.maxLength(200)], isActive: [true] });
+  constructor() { const id = this.route.snapshot.paramMap.get('id'); if (id) { this.correlationId.set(id); this.pageTitle.set('Edit Instrument'); this.loadItem(id); } }
+  onPhotoSelected(event: Event): void { const file = (event.target as HTMLInputElement).files?.[0] ?? null; this.selectedPhoto.set(file); this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null); if (file) this.form.markAsDirty(); }
+  onSubmit(): void { if (this.form.invalid) { Object.values(this.form.controls).forEach(c => c.markAsTouched()); this.toastService.warning('Please complete required fields.', 'Instrument needs attention'); return; } const id = this.correlationId(); const value = this.form.getRawValue(); const request: InstrumentRequest = { code: value.code ?? '', instrumentName: value.instrumentName ?? '', category: value.category ?? undefined, makeBrand: value.makeBrand ?? undefined, serialNo: value.serialNo ?? undefined, calibrationDueDate: value.calibrationDueDate ?? undefined, currentStock: value.currentStock ?? 0, location: value.location ?? undefined, isActive: value.isActive ?? true, photoUrl: this.currentPhotoUrl() ?? undefined }; this.isSubmitting.set(true); const op = id ? this.service.updateInstrument(id, request, this.selectedPhoto()) : this.service.createInstrument(request, this.selectedPhoto()); op.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: () => { this.isSubmitting.set(false); this.toastService.success('Instrument saved successfully.', 'Instrument saved'); this.router.navigate(['/instruments']); }, error: e => { this.isSubmitting.set(false); this.toastService.error(e?.error?.message || 'We could not save this instrument.', 'Save failed'); } }); }
+  onCancel(): void { if (!this.form.dirty) { this.router.navigate(['/instruments']); return; } this.dialogService.showWarning('Unsaved Changes', 'You have unsaved changes.', 'Discard these changes and leave?').then(c => { if (c) this.router.navigate(['/instruments']); }); }
+  isFieldInvalid(name: string): boolean { const f = this.form.get(name); return !!(f?.invalid && f.touched); }
+  getPhotoUrl(url: string | null): string { if (!url) return ''; if (/^https?:\/\//i.test(url)) return url; return `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}${url}`; }
+  private loadItem(id: string): void { this.isLoading.set(true); this.service.getInstrument(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: r => { const item = r.data as Instrument | undefined; if (item) { this.form.patchValue({ ...item, calibrationDueDate: item.calibrationDueDate?.slice(0, 10) ?? '' }); this.currentPhotoUrl.set(item.photoUrl ?? null); } this.isLoading.set(false); }, error: e => { this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load this instrument.', 'Instrument not loaded'); } }); }
+}

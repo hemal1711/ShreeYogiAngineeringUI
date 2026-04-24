@@ -1,0 +1,114 @@
+<div class="management-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="page-header">
+    <div>
+      <h1><i class="bi bi-key"></i> Role Permissions</h1>
+      <p>Assign permission codes to non-system roles and remove existing role permission assignments.</p>
+    </div>
+  </div>
+
+  @if (canShowAssignForm) {
+    <form [formGroup]="form" (ngSubmit)="onAssign()" class="assignment-panel">
+      <select class="form-select" formControlName="roleCorrelationId" aria-label="Role">
+        <option value="">Select role</option>
+        @for (role of roles(); track role.correlationId) {
+          <option [value]="role.correlationId">{{ role.roleName }}</option>
+        }
+      </select>
+
+      <select class="form-select" formControlName="permissionCorrelationId" aria-label="Permission">
+        <option value="">Select permission</option>
+        @for (permission of availablePermissions(); track permission.correlationId) {
+          <option [value]="permission.correlationId">{{ permission.code }} - {{ permission.name }}</option>
+        }
+      </select>
+
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting() || availablePermissions().length === 0">
+        @if (isSubmitting()) {
+          <span><span class="spinner-border spinner-border-sm me-2"></span>Assigning...</span>
+        } @else {
+          <span>Assign Permission</span>
+        }
+      </button>
+    </form>
+  }
+
+  <div class="toolbar role-permission-toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input class="form-control" type="text" placeholder="Search assigned permissions..." [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" />
+      <button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onSearch()">Search</button>
+    </div>
+    <button type="button" class="btn btn-outline-primary" (click)="exportCsv()"><i class="bi bi-download"></i> Export CSV</button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading role permissions...</p>
+    </div>
+  }
+
+  @if (!isLoading() && !selectedRoleId()) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No Role Selected</h3>
+      <p>Select a role to manage permission assignments.</p>
+    </div>
+  }
+
+  @if (!isLoading() && selectedRoleId() && filteredAssignedPermissions().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h3>No Permissions Found</h3>
+      <p>{{ appliedSearchTerm() ? 'No assigned permissions match your search.' : selectedRoleName + ' does not have any permissions assigned yet.' }}</p>
+    </div>
+  }
+
+  @if (!isLoading() && filteredAssignedPermissions().length > 0) {
+    <div class="table-responsive">
+      <table class="management-table">
+        <thead>
+          <tr>
+            <th>Permission Code</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th style="width: 100px">Status</th>
+            <th style="width: 120px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (permission of filteredAssignedPermissions(); track permission.correlationId) {
+            <tr>
+              <td><strong>{{ permission.code }}</strong></td>
+              <td>{{ permission.name }}</td>
+              <td>
+                <span class="text-truncate" [title]="permission.description || '-'">{{ permission.description || '-' }}</span>
+              </td>
+              <td><span class="badge" [ngClass]="getStatusBadge(permission.isActive).class">{{ getStatusBadge(permission.isActive).text }}</span></td>
+              <td>
+                <div class="action-buttons">
+                  @if (canUpdatePermission) {
+                    <a [routerLink]="['/permissions/edit', permission.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit permission">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  }
+                  @if (canManage) {
+                    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="removingId() === permission.correlationId" (click)="onRemove(permission)" title="Remove permission">
+                      @if (removingId() === permission.correlationId) {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                      } @else {
+                        <i class="bi bi-trash"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

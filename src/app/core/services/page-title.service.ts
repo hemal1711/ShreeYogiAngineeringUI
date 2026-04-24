@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -7,7 +8,9 @@ import { filter } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class PageTitleService {
-  private readonly appTitle = 'Shree Yogi Engineering';
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly appTitle = 'Shree Yogi Engineering';
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   private initialized = false;
@@ -22,7 +25,7 @@ export class PageTitleService {
 
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => this.setTitleFromRoute());
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.setTitleFromRoute());
   }
 
   private setTitleFromRoute(): void {

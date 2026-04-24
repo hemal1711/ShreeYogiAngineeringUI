@@ -1,0 +1,69 @@
+@use '../../shared-management';
+
+.item-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.photo-thumb,
+.photo-empty {
+  width: 3.25rem;
+  height: 3.25rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius-sm);
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  border: 0;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.photo-modal__panel {
+  position: relative;
+  display: block;
+  max-width: min(64rem, 96vw);
+  max-height: 92vh;
+}
+
+.photo-modal__panel img {
+  max-width: 100%;
+  max-height: 92vh;
+  border-radius: var(--sp-radius);
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.photo-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+}

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PagedResponse, Role, User, UserRole } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
 import { PermissionService } from '../../../core/services/permission.service';
@@ -11,13 +12,15 @@ import { ToastService } from '../../../shared/components/toast';
 @Component({
   selector: 'app-user-role-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, BreadcrumbComponent],
   templateUrl: './user-role-list.component.html',
   styleUrl: './user-role-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserRoleListComponent {
-  private readonly accessControlService = inject(AccessControlService);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly accessControlService = inject(AccessControlService);
   private readonly permissionService = inject(PermissionService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly dialogService = inject(ConfirmationDialogService);
@@ -32,6 +35,7 @@ export class UserRoleListComponent {
   readonly pageNumber = signal(1);
   readonly pageSize = signal(10);
   readonly totalCount = signal(0);
+  searchTerm = '';
 
   readonly canCreate = this.permissionService.has('userrole.create');
   readonly canDelete = this.permissionService.has('userrole.delete');
@@ -65,7 +69,7 @@ export class UserRoleListComponent {
 
   loadAssignments(): void {
     this.isLoading.set(true);
-    this.accessControlService.getUserRoles(this.pageNumber(), this.pageSize()).subscribe({
+    this.accessControlService.getUserRoles(this.pageNumber(), this.pageSize(), this.searchTerm).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const data = response.data as PagedResponse<UserRole> | undefined;
         const items = (data?.items ?? []).filter((assignment) => !this.isSuperAdminUser(assignment.userName));
@@ -94,7 +98,7 @@ export class UserRoleListComponent {
     }
 
     this.isSubmitting.set(true);
-    this.accessControlService.assignUserRole(this.form.value).subscribe({
+    this.accessControlService.assignUserRole(this.form.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.form.reset({ userCorrelationId: '', roleCorrelationId: '' });
@@ -117,7 +121,7 @@ export class UserRoleListComponent {
       this.accessControlService.removeUserRole({
         userCorrelationId: assignment.userCorrelationId,
         roleCorrelationId: assignment.roleCorrelationId
-      }).subscribe({
+      }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.removingId.set(null);
           this.toastService.success('Role removed successfully.', 'User role removed');
@@ -136,15 +140,23 @@ export class UserRoleListComponent {
     this.loadAssignments();
   }
 
+  onSearch(): void {
+    this.pageNumber.set(1);
+    this.loadAssignments();
+  }
+  exportCsv(): void {
+    this.downloadCsv('user-roles.csv', [['User','Role','Role Status','Assigned'], ...this.assignments().map(x => [x.userName, x.roleName, x.roleIsActive ? 'Active' : 'Inactive', x.createdOn])]);
+  }
+
   private loadLookups(): void {
     if (!this.canShowAssignForm) {
       return;
     }
 
-    this.accessControlService.getUsers(1, 200).subscribe({
+    this.accessControlService.getUsers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => this.users.set(((response.data as PagedResponse<User> | undefined)?.items ?? []).filter((user) => !this.isSuperAdminUser(user.userName)))
     });
-    this.accessControlService.getRoles(1, 200).subscribe({
+    this.accessControlService.getRoles(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => this.roles.set(((response.data as PagedResponse<Role> | undefined)?.items ?? []).filter((role) => !role.isSystemRole))
     });
   }
@@ -152,4 +164,5 @@ export class UserRoleListComponent {
   private isSuperAdminUser(userName: string): boolean {
     return userName.trim().toLowerCase() === 'superadmin';
   }
+  private downloadCsv(fileName: string, rows: string[][]): void { const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); }
 }

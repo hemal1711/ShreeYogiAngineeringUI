@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,15 +10,6 @@ import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.compo
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
 
-type PermissionAction = 'read' | 'create' | 'update' | 'delete';
-
-interface PermissionMatrixRow {
-  module: string;
-  moduleLabel: string;
-  actions: Partial<Record<PermissionAction, Permission>>;
-  otherActions: Permission[];
-}
-
 @Component({
   selector: 'app-permission-list',
   standalone: true,
@@ -27,7 +19,9 @@ interface PermissionMatrixRow {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PermissionListComponent {
-  private readonly accessControlService = inject(AccessControlService);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly accessControlService = inject(AccessControlService);
   private readonly permissionService = inject(PermissionService);
   private readonly dialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
@@ -36,11 +30,9 @@ export class PermissionListComponent {
   readonly isLoading = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pageNumber = signal(1);
-  readonly pageSize = signal(200);
+  readonly pageSize = signal(10);
   readonly totalCount = signal(0);
   readonly error = signal<string | null>(null);
-  readonly permissionActions: PermissionAction[] = ['read', 'create', 'update', 'delete'];
-  readonly permissionMatrix = computed<PermissionMatrixRow[]>(() => this.buildPermissionMatrix(this.permissions()));
 
   searchTerm = '';
   readonly canCreate = this.permissionService.has('permission.create');
@@ -69,7 +61,7 @@ export class PermissionListComponent {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.accessControlService.getPermissions(this.pageNumber(), this.pageSize(), this.searchTerm).subscribe({
+    this.accessControlService.getPermissions(this.pageNumber(), this.pageSize(), this.searchTerm).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const data = response.data as PagedResponse<Permission> | undefined;
         const items = data?.items ?? [];
@@ -103,6 +95,9 @@ export class PermissionListComponent {
     this.pageNumber.set(page);
     this.loadPermissions();
   }
+  exportCsv(): void {
+    this.downloadCsv('permissions.csv', [['Code','Name','Description','Status','Created'], ...this.permissions().map(x => [x.code, x.name, x.description || '', x.isActive ? 'Active' : 'Inactive', x.createdOn])]);
+  }
 
   onDelete(permission: Permission): void {
     this.dialogService.showDelete('permission').then((confirmed) => {
@@ -110,7 +105,7 @@ export class PermissionListComponent {
         return;
       }
       this.deletingId.set(permission.correlationId);
-      this.accessControlService.deletePermission(permission.correlationId).subscribe({
+      this.accessControlService.deletePermission(permission.correlationId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.deletingId.set(null);
           this.toastService.success(`${permission.code} deleted successfully.`, 'Permission deleted');
@@ -129,49 +124,6 @@ export class PermissionListComponent {
   getStatusBadge(isActive: boolean): { class: string; text: string } {
     return isActive ? { class: 'badge-success', text: 'Active' } : { class: 'badge-danger', text: 'Inactive' };
   }
+  private downloadCsv(fileName: string, rows: string[][]): void { const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); }
 
-  getPermissionActionLabel(action: PermissionAction): string {
-    return action.charAt(0).toUpperCase() + action.slice(1);
-  }
-
-  getActionPermission(row: PermissionMatrixRow, action: PermissionAction): Permission | undefined {
-    return row.actions[action];
-  }
-
-  formatModuleName(module: string): string {
-    return module
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/[-_]/g, ' ')
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
-  }
-
-  private buildPermissionMatrix(permissions: Permission[]): PermissionMatrixRow[] {
-    const rows = new Map<string, PermissionMatrixRow>();
-
-    [...permissions]
-      .sort((first, second) => first.code.localeCompare(second.code))
-      .forEach((permission) => {
-        const [modulePart, actionPart = ''] = permission.code.split('.');
-        const module = modulePart || permission.code;
-        const action = actionPart.toLowerCase() as PermissionAction;
-
-        if (!rows.has(module)) {
-          rows.set(module, {
-            module,
-            moduleLabel: this.formatModuleName(module),
-            actions: {},
-            otherActions: []
-          });
-        }
-
-        const row = rows.get(module)!;
-        if (this.permissionActions.includes(action)) {
-          row.actions[action] = permission;
-        } else {
-          row.otherActions.push(permission);
-        }
-      });
-
-    return Array.from(rows.values());
-  }
 }

@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { DestroyRef, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ConfirmationDialogService } from './confirmation-dialog.service';
 
@@ -17,7 +18,15 @@ export interface ConfirmationDialogConfig {
   imports: [CommonModule],
   template: `
     @if (isVisible()) {
-      <div class="confirmation-backdrop" (click)="onBackdropClick()">
+      <div
+        class="confirmation-backdrop"
+        tabindex="0"
+        role="button"
+        aria-label="Close confirmation dialog"
+        (click)="onBackdropClick()"
+        (keydown.enter)="onBackdropClick()"
+        (keydown.space)="onBackdropClick()"
+      >
         <div class="confirmation-dialog animated" [class]="'dialog-' + config().type">
           <!-- Icon -->
           <div class="dialog-icon">
@@ -72,14 +81,12 @@ export interface ConfirmationDialogConfig {
   styles: `
     .confirmation-backdrop {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background-color: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: clamp(0.75rem, 3vw, 1.25rem);
       z-index: 1050;
       animation: fadeIn 0.2s ease-in-out;
     }
@@ -95,11 +102,11 @@ export interface ConfirmationDialogConfig {
 
     .confirmation-dialog {
       background: white;
-      border-radius: 12px;
+      border-radius: var(--sp-radius);
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      padding: 40px;
-      max-width: 400px;
-      width: 90%;
+      padding: clamp(1.4rem, 4vw, 2.5rem);
+      max-width: 28rem;
+      width: 100%;
       text-align: center;
       animation: slideUp 0.3s ease-out;
 
@@ -190,8 +197,10 @@ export interface ConfirmationDialogConfig {
       display: flex;
       gap: 12px;
       justify-content: center;
+      flex-wrap: wrap;
 
       .btn {
+        min-height: var(--sp-touch-target);
         padding: 10px 24px;
         font-size: 14px;
         font-weight: 500;
@@ -241,8 +250,7 @@ export interface ConfirmationDialogConfig {
 
     @media (max-width: 576px) {
       .confirmation-dialog {
-        padding: 30px;
-        max-width: 95%;
+        max-width: 100%;
 
         .dialog-title {
           font-size: 18px;
@@ -264,7 +272,9 @@ export interface ConfirmationDialogConfig {
   `
 })
 export class ConfirmationDialogComponent {
-  private readonly dialogService = inject(ConfirmationDialogService);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly dialogService = inject(ConfirmationDialogService);
 
   isVisible = signal(false);
   config = signal<ConfirmationDialogConfig>({
@@ -274,7 +284,7 @@ export class ConfirmationDialogComponent {
   });
 
   constructor() {
-    this.dialogService.dialogState$.subscribe(state => {
+    this.dialogService.dialogState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(state => {
       this.isVisible.set(state.isVisible);
       if (state.config) {
         this.config.set(state.config);

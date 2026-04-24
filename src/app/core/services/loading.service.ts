@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MasterService } from './master.service';
@@ -7,7 +8,9 @@ import { MasterService } from './master.service';
   providedIn: 'root'
 })
 export class LoadingService {
-  private readonly router = inject(Router);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly router = inject(Router);
   private readonly masterService = inject(MasterService);
   private readonly routeLoading = signal(false);
 
@@ -24,7 +27,7 @@ export class LoadingService {
           event instanceof NavigationError
         )
       )
-      .subscribe((event) => {
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
         if (event instanceof NavigationStart) {
           this.routeLoading.set(true);
           return;

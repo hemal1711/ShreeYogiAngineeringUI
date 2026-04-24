@@ -1,77 +1,60 @@
 <div class="dashboard-page">
-  <section class="dashboard-page__hero">
-    <div>
-      <p class="dashboard-page__eyebrow">Overview</p>
-      <h1>Dashboard</h1>
-      <p>Track service activity, payouts, and booking operations from one clear workspace.</p>
-    </div>
-    <div class="dashboard-page__hero-meta">
-      <span>Updated today</span>
-      <strong>12:59 PM</strong>
-    </div>
-  </section>
-
-  <section class="dashboard-page__notice">
-    <i class="bi bi-exclamation-circle-fill"></i>
-    <span>
-      Important Notice: Please enable RazorpayX From PAYMENT CONFIGURATION tab to allow providers to withdraw their funds.
-      <a routerLink="/settings">Here is the link <i class="bi bi-box-arrow-up-right"></i></a>
-    </span>
+  <section class="dashboard-page__heading">
+    <h1>Dashboard</h1>
+    <p>Shree Yogi Engineering - Stock Overview</p>
   </section>
 
   <section class="dashboard-page__stats">
     @for (card of metricCards; track card.label) {
       <article class="metric-card">
+        <span class="metric-card__icon" [attr.data-tone]="card.tone">
+          <i [class]="'bi ' + card.icon"></i>
+        </span>
+        <strong>{{ card.value }}</strong>
+        <h2>{{ card.label }}</h2>
+        <p>{{ card.meta }}</p>
+      </article>
+    }
+  </section>
+
+  <section class="dashboard-page__analytics">
+    <article class="panel panel--wide">
+      <div class="panel__header">
         <div>
-          <h2>{{ card.value }}</h2>
-          <p>{{ card.label }}</p>
+          <h3>Manufacturing Stock Overview</h3>
+          <p>Top items by received vs. dispatched qty</p>
         </div>
-        <i [class]="'bi ' + card.icon"></i>
-      </article>
-    }
+      </div>
+      <div class="chart chart--bar">
+        <canvas baseChart [data]="manufacturingChartData" [options]="barChartOptions" [type]="'bar'"></canvas>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel__header">
+        <div>
+          <h3>Tooling Stock Status</h3>
+          <p>Distribution by stock level</p>
+        </div>
+      </div>
+      <div class="chart chart--doughnut">
+        <canvas baseChart [data]="stockStatusChartData" [options]="doughnutChartOptions" [type]="'doughnut'"></canvas>
+      </div>
+    </article>
   </section>
 
-  <section class="dashboard-page__chart panel">
-    <div class="panel__header">
-      <div>
-        <h3>Monthly Revenue</h3>
-      </div>
-      <div class="panel__actions">
-        <i class="bi bi-search"></i>
-        <i class="bi bi-sliders"></i>
-      </div>
-    </div>
-
-    <div class="chart">
-      <canvas
-        baseChart
-        [data]="lineChartData"
-        [options]="lineChartOptions"
-        [type]="'line'"
-      ></canvas>
-    </div>
-  </section>
-
-  <section class="dashboard-page__panels">
-    @for (panel of summaryPanels; track panel.title) {
-      <article class="panel panel--summary">
-        <div class="panel__header">
-          <h3>{{ panel.title }} ({{ panel.count }})</h3>
-          <a routerLink="/settings">View All</a>
-        </div>
-
-        <div class="summary-list">
-          @for (item of panel.items; track item.name) {
-            <div class="summary-list__item">
-              <div class="summary-list__avatar">{{ item.name[0] }}</div>
-              <div>
-                <strong>{{ item.name }}</strong>
-                <span>{{ item.meta }}</span>
-              </div>
-            </div>
-          }
-        </div>
-      </article>
-    }
+  <section class="dashboard-page__analytics dashboard-page__analytics--three">
+    <article class="panel">
+      <div class="panel__header"><div><h3>Fastener Stock</h3><p>Current stock vs. minimum stock</p></div></div>
+      <div class="chart chart--bar"><canvas baseChart [data]="fastenerStockChartData" [options]="barChartOptions" [type]="'bar'"></canvas></div>
+    </article>
+    <article class="panel">
+      <div class="panel__header"><div><h3>Instrument Issues</h3><p>Issued vs. returned instruments</p></div></div>
+      <div class="chart chart--doughnut"><canvas baseChart [data]="instrumentIssueChartData" [options]="pieChartOptions" [type]="'pie'"></canvas></div>
+    </article>
+    <article class="panel">
+      <div class="panel__header"><div><h3>Calibration Plan</h3><p>Upcoming calibration due count</p></div></div>
+      <div class="chart chart--bar"><canvas baseChart [data]="calibrationChartData" [options]="lineChartOptions" [type]="'line'"></canvas></div>
+    </article>
   </section>
 </div>

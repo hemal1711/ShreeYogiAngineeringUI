@@ -1,36 +1,21 @@
 .shell-footer {
-  padding: 1.5rem;
-  background: linear-gradient(180deg, #fafbfd 0%, #f5f7fc 100%);
-  border-top: 1px solid #e4e7f1;
-  color: #8d95af;
-  font-size: 0.8rem;
-  
+  padding: 1rem var(--sp-page-gutter);
+  background: var(--sp-background);
+  border-top: 1px solid var(--sp-border);
+  color: var(--sp-muted);
+  font-size: 0.82rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
 }
 
-// Responsive Design
-@media (max-width: 1024px) {
-  .shell-footer {
-    padding: 1.25rem;
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .shell-footer {
     flex-direction: column;
     text-align: center;
-    padding: 1rem;
+    padding: 0.8rem 0.75rem;
     gap: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .shell-footer {
-    padding: 0.75rem;
     font-size: 0.7rem;
   }
 }

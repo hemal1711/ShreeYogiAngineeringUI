@@ -18,12 +18,19 @@
   display: grid;
   justify-items: center;
   gap: 0.9rem;
-  width: min(100% - 2rem, 18rem);
+  width: min(100% - 1.5rem, 18rem);
   padding: 1.5rem 1.35rem;
   border: 1px solid rgba(95, 90, 209, 0.08);
-  border-radius: 1.25rem;
+  border-radius: var(--sp-radius);
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 640px) {
+  .app-loader__panel {
+    width: 100%;
+    border-inline: 0;
+  }
 }
 
 .app-loader__brand {

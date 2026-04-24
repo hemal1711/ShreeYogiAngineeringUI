@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { DestroyRef, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +20,9 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserFormComponent {
-  private readonly formBuilder = inject(FormBuilder);
+  
+  private readonly destroyRef = inject(DestroyRef);
+private readonly formBuilder = inject(FormBuilder);
   private readonly accessControlService = inject(AccessControlService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -60,7 +63,11 @@ export class UserFormComponent {
 
   toggleRole(roleId: string): void {
     const next = new Set(this.selectedRoleIds());
-    next.has(roleId) ? next.delete(roleId) : next.add(roleId);
+    if (next.has(roleId)) {
+      next.delete(roleId);
+    } else {
+      next.add(roleId);
+    }
     this.selectedRoleIds.set(next);
     this.form.markAsDirty();
   }
@@ -101,7 +108,7 @@ export class UserFormComponent {
         }
         return this.saveRoles(userId).pipe(switchMap(() => of(response)));
       })
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
         this.toastService.success(id ? 'User updated successfully.' : 'User created successfully.', 'User saved');
@@ -159,7 +166,7 @@ export class UserFormComponent {
     const user$ = userId ? this.accessControlService.getUser(userId) : of(null);
     const userRoles$ = userId && this.canShowRolePicker ? this.accessControlService.getRolesForUser(userId) : of(null);
 
-    forkJoin({ roles: roles$, user: user$, userRoles: userRoles$ }).subscribe({
+    forkJoin({ roles: roles$, user: user$, userRoles: userRoles$ }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ roles, user, userRoles }) => {
         const roleItems = ((roles?.data as PagedResponse<Role> | undefined)?.items ?? []).filter((role) => !role.isSystemRole);
         this.roles.set(roleItems);
