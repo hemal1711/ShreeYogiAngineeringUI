@@ -9,13 +9,16 @@
   padding: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap; // ✅ allow wrapping
   gap: 0;
+  min-width: 0;
 }
 
 .breadcrumb-item {
   display: flex;
   align-items: center;
   gap: 0;
+  min-width: 0;
 
   &:first-child {
     .breadcrumb-link {
@@ -41,13 +44,21 @@
 }
 
 .breadcrumb-current {
+  display: inline-block;
   padding: 0.5rem 0.65rem;
   color: #0f172a;
   font-size: 0.85rem;
   font-weight: 600;
-  white-space: nowrap;
+
+  white-space: normal;         // ✅ allow line break
+  overflow-wrap: anywhere;     // ✅ break long IDs
+  word-break: break-word;      // ✅ fallback
+
+  min-width: 0;
+  max-width: 100%;             // ✅ full width on mobile
 }
 
+/* Separator */
 .breadcrumb-separator {
   display: inline-flex;
   align-items: center;
@@ -56,7 +67,7 @@
   font-size: 0.75rem;
 }
 
-// Responsive Design
+/* Tablet */
 @media (max-width: 768px) {
   .breadcrumb-nav {
     padding: 0;
@@ -64,18 +75,8 @@
 
   .breadcrumb-list {
     padding: 0;
-    gap: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-
-    &::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: #c7cfe2;
-      border-radius: 2px;
-    }
+    flex-wrap: wrap;          // ✅ important
+    overflow-x: hidden;       // ❌ remove scroll
   }
 
   .breadcrumb-link,
@@ -83,8 +84,13 @@
     font-size: 0.8rem;
     padding: 0.5rem 0.5rem;
   }
+
+  .breadcrumb-current {
+    max-width: 100%;
+  }
 }
 
+/* Mobile */
 @media (max-width: 480px) {
   .breadcrumb-nav {
     padding: 0;
@@ -98,6 +104,10 @@
   .breadcrumb-current {
     font-size: 0.75rem;
     padding: 0.4rem 0.4rem;
+  }
+
+  .breadcrumb-current {
+    max-width: 100%;
   }
 
   .breadcrumb-separator {

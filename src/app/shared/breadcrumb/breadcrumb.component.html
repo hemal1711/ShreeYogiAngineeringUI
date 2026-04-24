@@ -3,7 +3,7 @@
     @for (breadcrumb of breadcrumbs(); let last = $last; track breadcrumb.link) {
       <li class="breadcrumb-item">
         @if (last) {
-          <span class="breadcrumb-current">{{ breadcrumb.label }}</span>
+          <span class="breadcrumb-current" [title]="breadcrumb.label">{{ breadcrumb.label }}</span>
         }
         @if (!last) {
           <a [routerLink]="breadcrumb.link" class="breadcrumb-link">
