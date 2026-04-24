@@ -3,7 +3,9 @@
   [ngClass]="{ 'shell-sidebar--collapsed': layout.sidebarCollapsed() && !layout.mobileSidebarOpen() }"
 >
   <div class="shell-sidebar__brand">
-    <div class="shell-sidebar__mark">SY</div>
+    <div class="shell-sidebar__mark">
+      <img src="assets/logo.png" alt="Shree Yogi Engineering logo" />
+    </div>
 
     @if (!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) {
       <div class="shell-sidebar__identity">
