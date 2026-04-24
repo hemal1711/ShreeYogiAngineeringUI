@@ -4,57 +4,70 @@
     <p>Shree Yogi Engineering - Stock Overview</p>
   </section>
 
-  <section class="dashboard-page__stats">
-    @for (card of metricCards; track card.label) {
-      <article class="metric-card">
-        <span class="metric-card__icon" [attr.data-tone]="card.tone">
-          <i [class]="'bi ' + card.icon"></i>
-        </span>
-        <strong>{{ card.value }}</strong>
-        <h2>{{ card.label }}</h2>
-        <p>{{ card.meta }}</p>
+  @if (isLoading()) {
+    <section class="dashboard-page__placeholder">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading dashboard...</p>
+    </section>
+  } @else if (loadError()) {
+    <section class="dashboard-page__placeholder dashboard-page__placeholder--error">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ loadError() }}</p>
+      <button type="button" class="btn btn-primary" (click)="reload()">Retry</button>
+    </section>
+  } @else {
+    <section class="dashboard-page__stats">
+      @for (card of metricCards(); track card.label) {
+        <article class="metric-card">
+          <span class="metric-card__icon" [attr.data-tone]="card.tone">
+            <i [class]="'bi ' + card.icon"></i>
+          </span>
+          <strong>{{ card.value }}</strong>
+          <h2>{{ card.label }}</h2>
+          <p>{{ card.meta }}</p>
+        </article>
+      }
+    </section>
+
+    <section class="dashboard-page__analytics">
+      <article class="panel panel--wide">
+        <div class="panel__header">
+          <div>
+            <h3>Manufacturing Stock Overview</h3>
+            <p>Top items by received, dispatched, and in-hand qty</p>
+          </div>
+        </div>
+        <div class="chart chart--bar">
+          <canvas baseChart [data]="manufacturingChartData()" [options]="barChartOptions" [type]="'bar'"></canvas>
+        </div>
       </article>
-    }
-  </section>
 
-  <section class="dashboard-page__analytics">
-    <article class="panel panel--wide">
-      <div class="panel__header">
-        <div>
-          <h3>Manufacturing Stock Overview</h3>
-          <p>Top items by received vs. dispatched qty</p>
+      <article class="panel">
+        <div class="panel__header">
+          <div>
+            <h3>Tooling Stock Status</h3>
+            <p>Distribution by stock level</p>
+          </div>
         </div>
-      </div>
-      <div class="chart chart--bar">
-        <canvas baseChart [data]="manufacturingChartData" [options]="barChartOptions" [type]="'bar'"></canvas>
-      </div>
-    </article>
-
-    <article class="panel">
-      <div class="panel__header">
-        <div>
-          <h3>Tooling Stock Status</h3>
-          <p>Distribution by stock level</p>
+        <div class="chart chart--doughnut">
+          <canvas baseChart [data]="stockStatusChartData()" [options]="doughnutChartOptions" [type]="'doughnut'"></canvas>
         </div>
-      </div>
-      <div class="chart chart--doughnut">
-        <canvas baseChart [data]="stockStatusChartData" [options]="doughnutChartOptions" [type]="'doughnut'"></canvas>
-      </div>
-    </article>
-  </section>
+      </article>
+    </section>
 
-  <section class="dashboard-page__analytics dashboard-page__analytics--three">
-    <article class="panel">
-      <div class="panel__header"><div><h3>Fastener Stock</h3><p>Current stock vs. minimum stock</p></div></div>
-      <div class="chart chart--bar"><canvas baseChart [data]="fastenerStockChartData" [options]="barChartOptions" [type]="'bar'"></canvas></div>
-    </article>
-    <article class="panel">
-      <div class="panel__header"><div><h3>Instrument Issues</h3><p>Issued vs. returned instruments</p></div></div>
-      <div class="chart chart--doughnut"><canvas baseChart [data]="instrumentIssueChartData" [options]="pieChartOptions" [type]="'pie'"></canvas></div>
-    </article>
-    <article class="panel">
-      <div class="panel__header"><div><h3>Calibration Plan</h3><p>Upcoming calibration due count</p></div></div>
-      <div class="chart chart--bar"><canvas baseChart [data]="calibrationChartData" [options]="lineChartOptions" [type]="'line'"></canvas></div>
-    </article>
-  </section>
+    <section class="dashboard-page__analytics dashboard-page__analytics--three">
+      <article class="panel">
+        <div class="panel__header"><div><h3>Fastener Stock</h3><p>Current stock vs. minimum stock</p></div></div>
+        <div class="chart chart--bar"><canvas baseChart [data]="fastenerStockChartData()" [options]="barChartOptions" [type]="'bar'"></canvas></div>
+      </article>
+      <article class="panel">
+        <div class="panel__header"><div><h3>Instrument Issues</h3><p>Issued vs. returned records</p></div></div>
+        <div class="chart chart--doughnut"><canvas baseChart [data]="instrumentIssueChartData()" [options]="pieChartOptions" [type]="'pie'"></canvas></div>
+      </article>
+      <article class="panel">
+        <div class="panel__header"><div><h3>Calibration Plan</h3><p>Upcoming calibration due count</p></div></div>
+        <div class="chart chart--bar"><canvas baseChart [data]="calibrationChartData()" [options]="lineChartOptions" [type]="'line'"></canvas></div>
+      </article>
+    </section>
+  }
 </div>

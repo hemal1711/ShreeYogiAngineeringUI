@@ -4,6 +4,28 @@
   min-width: 0;
 }
 
+.dashboard-page__placeholder {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: clamp(2rem, 5vw, 4rem) 1.25rem;
+  border: 1px solid #dce3ee;
+  border-radius: var(--sp-radius);
+  background: var(--sp-surface);
+  box-shadow: var(--sp-shadow);
+  text-align: center;
+}
+
+.dashboard-page__placeholder p {
+  margin: 0;
+  color: #64748b;
+}
+
+.dashboard-page__placeholder--error i {
+  color: #dc2626;
+  font-size: 2rem;
+}
+
 .dashboard-page__heading h1 {
   margin: 0;
   color: #0f172a;

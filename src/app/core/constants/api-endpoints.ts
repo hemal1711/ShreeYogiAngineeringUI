@@ -1,4 +1,7 @@
 export const API_ENDPOINTS = {
+  dashboard: {
+    summary: '/dashboard/summary'
+  },
   auth: {
     login: '/auth/login',
     refreshToken: '/auth/refreshtoken',

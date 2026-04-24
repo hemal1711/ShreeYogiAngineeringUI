@@ -265,6 +265,59 @@ export interface ToolingStockSummary {
   status: string;
 }
 
+export interface DashboardManufacturingStockPoint {
+  itemCode: string;
+  itemName: string;
+  receivedQty: number;
+  dispatchedQty: number;
+  qtyInHand: number;
+}
+
+export interface DashboardToolingStockStatus {
+  inStockCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+}
+
+export interface DashboardFastenerStockPoint {
+  itemCode: string;
+  itemName: string;
+  currentStock: number;
+  minimumStock: number;
+}
+
+export interface DashboardInstrumentIssueStatus {
+  issuedCount: number;
+  returnedCount: number;
+}
+
+export interface DashboardCalibrationPoint {
+  label: string;
+  dueCount: number;
+}
+
+export interface DashboardSummary {
+  customerCount: number;
+  activeCustomerCount: number;
+  manufacturingItemCount: number;
+  activeManufacturingItemCount: number;
+  toolingItemCount: number;
+  activeToolingItemCount: number;
+  instrumentCount: number;
+  openInstrumentIssueCount: number;
+  lowStockAlertCount: number;
+  manufacturingLowStockCount: number;
+  toolingLowStockCount: number;
+  fastenerLowStockCount: number;
+  totalManufacturingOperationCount: number;
+  recentManufacturingOperationCount: number;
+  manufacturingStock: DashboardManufacturingStockPoint[];
+  toolingStockStatus: DashboardToolingStockStatus;
+  fastenerStock: DashboardFastenerStockPoint[];
+  instrumentIssueStatus: DashboardInstrumentIssueStatus;
+  calibrationPlan: DashboardCalibrationPoint[];
+}
+
 export interface Fastener {
   correlationId: string;
   itemCode: string;

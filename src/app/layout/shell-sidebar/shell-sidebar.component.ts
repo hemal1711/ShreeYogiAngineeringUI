@@ -106,8 +106,7 @@ export class ShellSidebarComponent {
             { label: 'Instruments', icon: 'bi-rulers', link: '/instruments', permissions: ['instrument.read'] },
             { label: 'Instrument Issues', icon: 'bi-clipboard-check', link: '/instrument-issues', permissions: ['instrumentissue.read'] }
           ]
-        },
-        { label: 'Settings', icon: 'bi-gear', link: '/settings', permissions: ['settings.read'] }
+        }
       ]
     }
   ];

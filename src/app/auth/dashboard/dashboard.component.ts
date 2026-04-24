@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js';
-import { AuthService } from '../../core/services/auth.service';
+import { DashboardSummary } from '../../core/models/access-control.model';
+import { AccessControlService } from '../../core/services/access-control.service';
 
 Chart.register(...registerables);
 
@@ -22,41 +24,58 @@ interface MetricCard {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
-  private readonly authService = inject(AuthService);
-  readonly currentUser = this.authService.currentUser;
+  private readonly accessControlService = inject(AccessControlService);
 
-  readonly metricCards: readonly MetricCard[] = [
-    { label: 'Customers', value: '5', icon: 'bi-people', meta: '+2 this month', tone: 'blue' },
-    { label: 'Mfg. Items', value: '16', icon: 'bi-box-seam', meta: '6 active', tone: 'purple' },
-    { label: 'Tooling Items', value: '9', icon: 'bi-wrench', meta: '7 tracked', tone: 'green' },
-    { label: 'Instruments', value: '7', icon: 'bi-rulers', meta: '3 issued', tone: 'orange' },
-    { label: 'Low Stock Alerts', value: '8', icon: 'bi-exclamation-triangle', meta: 'Need attention', tone: 'red' },
-    { label: 'Total Mfg. Ops', value: '23', icon: 'bi-activity', meta: '5 recent', tone: 'cyan' }
-  ];
+  readonly summary = signal<DashboardSummary | null>(null);
+  readonly isLoading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
-  readonly manufacturingChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: ['TX-5053', 'TX-0684', 'BIG-BODY', 'FLANGE...', 'MAIN-CRO...', 'MINI-STA...'],
-    datasets: [
-      {
-        label: 'Received',
-        data: [2850, 580, 690, 520, 350, 500],
-        backgroundColor: '#3b82f6',
-        borderRadius: 4
-      },
-      {
-        label: 'Dispatched',
-        data: [5500, 1080, 0, 0, 0, 0],
-        backgroundColor: '#8b5cf6',
-        borderRadius: 4
-      },
-      {
-        label: 'In Hand',
-        data: [0, 0, 680, 520, 360, 510],
-        backgroundColor: '#22c55e',
-        borderRadius: 4
-      }
-    ]
-  };
+  constructor() {
+    this.reload();
+  }
+
+  readonly metricCards = computed<readonly MetricCard[]>(() => {
+    const summary = this.summary();
+    if (!summary) {
+      return [];
+    }
+
+    return [
+      { label: 'Customers', value: this.formatNumber(summary.customerCount), icon: 'bi-people', meta: `${this.formatNumber(summary.activeCustomerCount)} active`, tone: 'blue' },
+      { label: 'Mfg. Items', value: this.formatNumber(summary.manufacturingItemCount), icon: 'bi-box-seam', meta: `${this.formatNumber(summary.activeManufacturingItemCount)} active`, tone: 'purple' },
+      { label: 'Tooling Items', value: this.formatNumber(summary.toolingItemCount), icon: 'bi-wrench', meta: `${this.formatNumber(summary.activeToolingItemCount)} active`, tone: 'green' },
+      { label: 'Instruments', value: this.formatNumber(summary.instrumentCount), icon: 'bi-rulers', meta: `${this.formatNumber(summary.openInstrumentIssueCount)} issued`, tone: 'orange' },
+      { label: 'Low Stock Alerts', value: this.formatNumber(summary.lowStockAlertCount), icon: 'bi-exclamation-triangle', meta: `Mfg ${this.formatNumber(summary.manufacturingLowStockCount)} | Tooling ${this.formatNumber(summary.toolingLowStockCount)} | Fastener ${this.formatNumber(summary.fastenerLowStockCount)}`, tone: 'red' },
+      { label: 'Total Mfg. Ops', value: this.formatNumber(summary.totalManufacturingOperationCount), icon: 'bi-activity', meta: `${this.formatNumber(summary.recentManufacturingOperationCount)} recent`, tone: 'cyan' }
+    ];
+  });
+
+  readonly manufacturingChartData = computed<ChartConfiguration<'bar'>['data']>(() => {
+    const points = this.summary()?.manufacturingStock ?? [];
+    return {
+      labels: points.map((point) => point.itemCode),
+      datasets: [
+        {
+          label: 'Received',
+          data: points.map((point) => point.receivedQty),
+          backgroundColor: '#3b82f6',
+          borderRadius: 4
+        },
+        {
+          label: 'Dispatched',
+          data: points.map((point) => point.dispatchedQty),
+          backgroundColor: '#8b5cf6',
+          borderRadius: 4
+        },
+        {
+          label: 'In Hand',
+          data: points.map((point) => point.qtyInHand),
+          backgroundColor: '#22c55e',
+          borderRadius: 4
+        }
+      ]
+    };
+  });
 
   readonly barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
@@ -91,10 +110,8 @@ export class DashboardComponent {
         }
       },
       y: {
-        min: 0,
-        max: 6000,
+        beginAtZero: true,
         ticks: {
-          stepSize: 1500,
           color: '#64748b',
           font: { size: 11 }
         },
@@ -108,48 +125,60 @@ export class DashboardComponent {
     }
   };
 
-  readonly stockStatusChartData: ChartConfiguration<'doughnut'>['data'] = {
-    labels: ['In Stock', 'Low Stock', 'Out of Stock'],
-    datasets: [
-      {
-        data: [70, 25, 35],
-        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-        borderColor: '#ffffff',
-        borderWidth: 0,
-        hoverOffset: 4
-      }
-    ]
-  };
+  readonly stockStatusChartData = computed<ChartConfiguration<'doughnut'>['data']>(() => {
+    const status = this.summary()?.toolingStockStatus;
+    return {
+      labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+      datasets: [
+        {
+          data: status ? [status.inStockCount, status.lowStockCount, status.outOfStockCount] : [0, 0, 0],
+          backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+          borderColor: '#ffffff',
+          borderWidth: 0,
+          hoverOffset: 4
+        }
+      ]
+    };
+  });
 
-  readonly fastenerStockChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: ['Bolts', 'Nuts', 'Washers', 'Screws'],
-    datasets: [
-      { label: 'Current Stock', data: [770, 680, 1600, 850], backgroundColor: '#0ea5e9', borderRadius: 4 },
-      { label: 'Minimum Stock', data: [200, 400, 1000, 300], backgroundColor: '#f97316', borderRadius: 4 }
-    ]
-  };
+  readonly fastenerStockChartData = computed<ChartConfiguration<'bar'>['data']>(() => {
+    const points = this.summary()?.fastenerStock ?? [];
+    return {
+      labels: points.map((point) => point.itemCode),
+      datasets: [
+        { label: 'Current Stock', data: points.map((point) => point.currentStock), backgroundColor: '#0ea5e9', borderRadius: 4 },
+        { label: 'Minimum Stock', data: points.map((point) => point.minimumStock), backgroundColor: '#f97316', borderRadius: 4 }
+      ]
+    };
+  });
 
-  readonly instrumentIssueChartData: ChartConfiguration<'pie'>['data'] = {
-    labels: ['Issued', 'Returned'],
-    datasets: [
-      { data: [3, 2], backgroundColor: ['#f97316', '#22c55e'], borderWidth: 0 }
-    ]
-  };
+  readonly instrumentIssueChartData = computed<ChartConfiguration<'pie'>['data']>(() => {
+    const status = this.summary()?.instrumentIssueStatus;
+    return {
+      labels: ['Issued', 'Returned'],
+      datasets: [
+        { data: status ? [status.issuedCount, status.returnedCount] : [0, 0], backgroundColor: ['#f97316', '#22c55e'], borderWidth: 0 }
+      ]
+    };
+  });
 
-  readonly calibrationChartData: ChartConfiguration<'line'>['data'] = {
-    labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-    datasets: [
-      {
-        label: 'Calibration Due',
-        data: [2, 4, 3, 5, 6, 4],
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.14)',
-        pointBackgroundColor: '#ef4444',
-        fill: true,
-        tension: 0.35
-      }
-    ]
-  };
+  readonly calibrationChartData = computed<ChartConfiguration<'line'>['data']>(() => {
+    const points = this.summary()?.calibrationPlan ?? [];
+    return {
+      labels: points.map((point) => point.label),
+      datasets: [
+        {
+          label: 'Calibration Due',
+          data: points.map((point) => point.dueCount),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.14)',
+          pointBackgroundColor: '#ef4444',
+          fill: true,
+          tension: 0.35
+        }
+      ]
+    };
+  });
 
   readonly doughnutChartOptions: ChartOptions<'doughnut'> = {
     responsive: true,
@@ -191,4 +220,30 @@ export class DashboardComponent {
       y: { beginAtZero: true, grid: { color: '#e2e8f0' }, ticks: { color: '#64748b', precision: 0 } }
     }
   };
+
+  reload(): void {
+    this.isLoading.set(true);
+    this.loadError.set(null);
+
+    this.accessControlService
+      .getDashboardSummary()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (response) => {
+          this.summary.set(response.data ?? null);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          this.summary.set(null);
+          this.loadError.set(error?.error?.message || 'We could not load dashboard data. Please try again.');
+          this.isLoading.set(false);
+        }
+      });
+  }
+
+  private formatNumber(value: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      maximumFractionDigits: Number.isInteger(value) ? 0 : 2
+    }).format(value);
+  }
 }

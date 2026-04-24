@@ -20,6 +20,7 @@ import {
   ManufacturingOperationRequest,
   ManufacturingStockSummary,
   ManufacturingItemRequest,
+  DashboardSummary,
   Permission,
   PermissionRequest,
   Role,
@@ -45,6 +46,10 @@ import {
 })
 export class AccessControlService {
   private readonly http = inject(HttpClient);
+
+  getDashboardSummary(): Observable<ApiResponse<DashboardSummary>> {
+    return this.http.get<ApiResponse<DashboardSummary>>(API_ENDPOINTS.dashboard.summary);
+  }
 
   getRoles(page = 1, pageSize = 10, search?: string): Observable<ApiResponse<PagedResponse<Role>>> {
     return this.http.get<ApiResponse<PagedResponse<Role>>>(API_ENDPOINTS.roles.list, {
