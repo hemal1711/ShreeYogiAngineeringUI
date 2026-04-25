@@ -24,7 +24,43 @@
     <div class="empty-state"><i class="bi bi-inbox"></i><h3>No Customers Found</h3><p>Create the first customer for this workspace.</p></div>
   }
   @if (!isLoading() && customers().length > 0) {
-    <div class="table-responsive">
+    <div class="mobile-data-list">
+      @for (customer of customers(); track customer.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header mobile-data-card__header--compact">
+            <div class="mobile-data-card__title">
+              <strong>{{ customer.customerName }}</strong>
+              <span>{{ customer.code }}</span>
+            </div>
+            <span class="badge" [ngClass]="getStatusBadge(customer.isActive).class">{{ getStatusBadge(customer.isActive).text }}</span>
+          </div>
+          <div class="mobile-data-card__grid mobile-data-card__grid--two">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Contact</span>
+              <span>{{ customer.contactPerson || '-' }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Phone</span>
+              <span>{{ customer.phone || '-' }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Email</span>
+              <span>{{ customer.email || '-' }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Created</span>
+              <span>{{ customer.createdOn | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+          <div class="action-buttons mobile-data-card__actions">
+            @if (canUpdate) { <a [routerLink]="['/customers/edit', customer.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit customer"><i class="bi bi-pencil"></i></a> }
+            @if (canDelete) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === customer.correlationId" (click)="onDelete(customer)" title="Delete customer">@if (deletingId() === customer.correlationId) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-trash"></i> }</button> }
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table">
       <table class="management-table">
         <thead>
           <tr>

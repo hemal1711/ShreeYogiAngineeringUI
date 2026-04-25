@@ -5,7 +5,29 @@
   @if (isLoading()) { <div class="loading-state"><div class="spinner-border text-primary"></div><p>Loading tooling items...</p></div> }
   @if (!isLoading() && items().length === 0) { <div class="empty-state"><i class="bi bi-inbox"></i><h3>No Tooling Items Found</h3><p>Create the first tooling item.</p></div> }
   @if (!isLoading() && items().length > 0) {
-    <div class="table-responsive"><table class="management-table"><thead><tr><th>Photo</th><th>Item Code</th><th>Item Name</th><th>Customer</th><th>Unit</th><th>Location</th><th>Low Stock</th><th style="width: 100px">Status</th><th style="width: 120px">Actions</th></tr></thead><tbody>
+    <div class="mobile-data-list">
+      @for (item of items(); track item.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header">
+            @if (item.photoUrl) { <button type="button" class="photo-thumb" (click)="openPhoto(item.photoUrl)" title="View photo"><img [src]="getPhotoUrl(item.photoUrl)" [alt]="item.itemName" /></button> } @else { <span class="photo-empty"><i class="bi bi-camera"></i></span> }
+            <div class="mobile-data-card__title">
+              <strong>{{ item.itemCode }}</strong>
+              <span>{{ item.itemName }}</span>
+            </div>
+            <span class="badge" [ngClass]="getStatusBadge(item.isActive).class">{{ getStatusBadge(item.isActive).text }}</span>
+          </div>
+          <div class="mobile-data-card__grid mobile-data-card__grid--two">
+            <div class="mobile-data-field"><span class="mobile-data-field__label">Customer</span><span>{{ item.customerName }} ({{ item.customerCode }})</span></div>
+            <div class="mobile-data-field"><span class="mobile-data-field__label">Unit</span><span>{{ item.unit || '-' }}</span></div>
+            <div class="mobile-data-field"><span class="mobile-data-field__label">Location</span><span>{{ item.location || '-' }}</span></div>
+            <div class="mobile-data-field"><span class="mobile-data-field__label">Low Stock</span><span>{{ item.lowStockThreshold }}</span></div>
+          </div>
+          <div class="action-buttons mobile-data-card__actions">@if (canUpdate) { <a [routerLink]="['/tooling-items/edit', item.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit item"><i class="bi bi-pencil"></i></a> } @if (canDelete) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === item.correlationId" (click)="onDelete(item)" title="Delete item">@if (deletingId() === item.correlationId) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-trash"></i> }</button> }</div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table"><table class="management-table"><thead><tr><th>Photo</th><th>Item Code</th><th>Item Name</th><th>Customer</th><th>Unit</th><th>Location</th><th>Low Stock</th><th style="width: 100px">Status</th><th style="width: 120px">Actions</th></tr></thead><tbody>
       @for (item of items(); track item.correlationId) {
         <tr><td>@if (item.photoUrl) { <button type="button" class="photo-thumb" (click)="openPhoto(item.photoUrl)" title="View photo"><img [src]="getPhotoUrl(item.photoUrl)" [alt]="item.itemName" /></button> } @else { <span class="photo-empty"><i class="bi bi-camera"></i></span> }</td><td><strong>{{ item.itemCode }}</strong></td><td>{{ item.itemName }}</td><td>{{ item.customerName }} ({{ item.customerCode }})</td><td>{{ item.unit || '-' }}</td><td>{{ item.location || '-' }}</td><td>{{ item.lowStockThreshold }}</td><td><span class="badge" [ngClass]="getStatusBadge(item.isActive).class">{{ getStatusBadge(item.isActive).text }}</span></td><td><div class="action-buttons">@if (canUpdate) { <a [routerLink]="['/tooling-items/edit', item.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit item"><i class="bi bi-pencil"></i></a> } @if (canDelete) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === item.correlationId" (click)="onDelete(item)" title="Delete item">@if (deletingId() === item.correlationId) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-trash"></i> }</button> }</div></td></tr>
       }

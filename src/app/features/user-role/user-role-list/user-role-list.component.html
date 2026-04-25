@@ -57,7 +57,30 @@
   }
 
   @if (!isLoading() && assignments().length > 0) {
-    <div class="table-responsive">
+    <div class="mobile-data-list">
+      @for (assignment of assignments(); track assignment.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header mobile-data-card__header--compact">
+            <div class="mobile-data-card__title">
+              <strong>{{ assignment.userName }}</strong>
+              <span>{{ assignment.roleName }}</span>
+            </div>
+            <span class="badge" [ngClass]="assignment.roleIsActive ? 'badge-success' : 'badge-danger'">{{ assignment.roleIsActive ? 'Active' : 'Inactive' }}</span>
+          </div>
+          <div class="mobile-data-card__grid">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Assigned</span>
+              <span>{{ assignment.createdOn | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+          <div class="action-buttons mobile-data-card__actions">
+            @if (canDelete) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="removingId() === assignment.correlationId" (click)="onRemove(assignment)" title="Remove role">@if (removingId() === assignment.correlationId) { <span class="spinner-border spinner-border-sm" role="status"></span> } @else { <i class="bi bi-trash"></i> }</button> }
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table">
       <table class="management-table">
         <thead>
           <tr>

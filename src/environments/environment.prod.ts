@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://service.rayhittechnologies.com/api'
+  apiBaseUrl: 'http://192.168.1.4:8080/api'
 };

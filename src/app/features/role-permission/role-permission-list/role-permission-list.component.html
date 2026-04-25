@@ -67,7 +67,31 @@
   }
 
   @if (!isLoading() && filteredAssignedPermissions().length > 0) {
-    <div class="table-responsive">
+    <div class="mobile-data-list">
+      @for (permission of filteredAssignedPermissions(); track permission.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header mobile-data-card__header--compact">
+            <div class="mobile-data-card__title">
+              <strong>{{ permission.code }}</strong>
+              <span>{{ permission.name }}</span>
+            </div>
+            <span class="badge" [ngClass]="getStatusBadge(permission.isActive).class">{{ getStatusBadge(permission.isActive).text }}</span>
+          </div>
+          <div class="mobile-data-card__grid">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Description</span>
+              <span>{{ permission.description || '-' }}</span>
+            </div>
+          </div>
+          <div class="action-buttons mobile-data-card__actions">
+            @if (canUpdatePermission) { <a [routerLink]="['/permissions/edit', permission.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit permission"><i class="bi bi-pencil"></i></a> }
+            @if (canManage) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="removingId() === permission.correlationId" (click)="onRemove(permission)" title="Remove permission">@if (removingId() === permission.correlationId) { <span class="spinner-border spinner-border-sm" role="status"></span> } @else { <i class="bi bi-trash"></i> }</button> }
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table">
       <table class="management-table">
         <thead>
           <tr>

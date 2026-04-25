@@ -39,8 +39,13 @@
 .management-form {
   width: 100%;
   max-width: none;
+  min-width: 0;
   margin: 0;
   padding: clamp(1rem, 1.7vw, 1.35rem);
+}
+
+.management-form .mb-3 {
+  min-width: 0;
 }
 
 .management-form .form-control,

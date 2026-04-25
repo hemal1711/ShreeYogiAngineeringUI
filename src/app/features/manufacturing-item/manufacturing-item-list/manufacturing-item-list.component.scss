@@ -8,6 +8,14 @@
   min-width: 0;
 }
 
+.desktop-item-table {
+  display: block;
+}
+
+.mobile-item-list {
+  display: none;
+}
+
 .photo-thumb,
 .photo-empty {
   width: 3.25rem;
@@ -66,4 +74,90 @@
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.78);
   color: #fff;
+}
+
+@media (min-width: 769px) {
+  .desktop-item-table .management-table {
+    min-width: 70rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-item-table {
+    display: none;
+  }
+
+  .mobile-item-list {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .mobile-item-card {
+    border: 1px solid #dce3ee;
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+  }
+
+  .mobile-item-card__header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .mobile-item-card__header .badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .mobile-item-card__title {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .mobile-item-card__title strong,
+  .mobile-item-card__title span {
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-item-card__title strong {
+    font-size: 1rem;
+  }
+
+  .mobile-item-card__title span {
+    color: #475569;
+  }
+
+  .mobile-item-card__grid {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+  }
+
+  .mobile-item-field {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .mobile-item-field span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-item-field__label {
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .mobile-item-card__actions {
+    padding: 0 1rem 1rem;
+  }
 }

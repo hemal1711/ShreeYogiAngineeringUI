@@ -39,7 +39,35 @@
   }
 
   @if (!isLoading() && users().length > 0) {
-    <div class="table-responsive">
+    <div class="mobile-data-list">
+      @for (user of users(); track user.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header mobile-data-card__header--compact">
+            <div class="mobile-data-card__title">
+              <strong>{{ user.userName }}</strong>
+              <span>{{ getFullName(user) }}</span>
+            </div>
+            <span class="badge" [ngClass]="getStatusBadge(user.isActive).class">{{ getStatusBadge(user.isActive).text }}</span>
+          </div>
+          <div class="mobile-data-card__grid">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Email</span>
+              <span>{{ user.email || '-' }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Created</span>
+              <span>{{ user.createdOn | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+          <div class="action-buttons mobile-data-card__actions">
+            @if (canUpdate) { <a [routerLink]="['/users/edit', user.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit user"><i class="bi bi-pencil"></i></a> }
+            @if (canDelete) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === user.correlationId" (click)="onDelete(user)" title="Delete user">@if (deletingId() === user.correlationId) { <span class="spinner-border spinner-border-sm" role="status"></span> } @else { <i class="bi bi-trash"></i> }</button> }
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table">
       <table class="management-table">
         <thead>
           <tr>
