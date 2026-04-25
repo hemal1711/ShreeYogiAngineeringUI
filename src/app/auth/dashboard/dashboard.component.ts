@@ -4,6 +4,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js';
 import { DashboardSummary } from '../../core/models/access-control.model';
 import { AccessControlService } from '../../core/services/access-control.service';
+import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb.component';
 
 Chart.register(...registerables);
 
@@ -18,7 +19,7 @@ interface MetricCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [BaseChartDirective, BreadcrumbComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

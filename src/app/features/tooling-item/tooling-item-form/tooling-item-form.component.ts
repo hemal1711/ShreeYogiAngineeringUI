@@ -48,6 +48,7 @@ private readonly fb = inject(FormBuilder);
   constructor() { const id = this.route.snapshot.paramMap.get('id'); if (id) { this.correlationId.set(id); this.pageTitle.set('Edit Tooling Item'); } this.loadPage(id); }
   onSubmit(): void {
     if (this.form.invalid) { Object.values(this.form.controls).forEach((c) => c.markAsTouched()); this.toastService.warning('Please complete required fields.', 'Item needs attention'); return; }
+    if (!this.hasPhoto()) { this.toastService.warning('Please upload an item photo before saving.', 'Photo required'); return; }
     const id = this.correlationId(); this.isSubmitting.set(true);
     const request = { ...this.form.value, photoUrl: this.currentPhotoUrl() ?? undefined };
     const op = id ? this.service.updateToolingItem(id, request, this.selectedPhoto()) : this.service.createToolingItem(request, this.selectedPhoto());
@@ -57,7 +58,9 @@ private readonly fb = inject(FormBuilder);
   isFieldInvalid(name: string): boolean { const f = this.form.get(name); return !!(f?.invalid && f.touched); }
   getFieldError(name: string): string | null { const f = this.form.get(name); if (!f?.errors || !f.touched) return null; if (f.errors['required']) return 'This field is required'; if (f.errors['min']) return 'Value must be zero or greater'; if (f.errors['maxlength']) return `Maximum ${f.errors['maxlength'].requiredLength} characters`; return 'Invalid value'; }
   onPhotoSelected(event: Event): void { const input = event.target as HTMLInputElement; const file = input.files?.[0] ?? null; this.selectedPhoto.set(file); this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null); if (file) this.form.markAsDirty(); }
+  removePhoto(input: HTMLInputElement): void { input.value = ''; this.selectedPhoto.set(null); this.selectedPhotoPreviewUrl.set(null); this.currentPhotoUrl.set(null); this.form.markAsDirty(); }
   getPhotoUrl(photoUrl: string | null): string { if (!photoUrl) return ''; if (/^https?:\/\//i.test(photoUrl)) return photoUrl; return `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}${photoUrl}`; }
   private loadPage(id: string | null): void { this.isLoading.set(true); this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (r) => { this.customers.set((r.data as PagedResponse<Customer> | undefined)?.items ?? []); if (id) this.loadItem(id); else this.isLoading.set(false); }, error: (error) => { this.isLoading.set(false); this.toastService.error(error?.error?.message || 'We could not load customers.', 'Customers not loaded'); } }); }
   private loadItem(id: string): void { this.service.getToolingItem(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (r) => { const item = r.data as ToolingItem | undefined; if (item) { this.form.patchValue(item); this.currentPhotoUrl.set(item.photoUrl ?? null); } this.isLoading.set(false); }, error: (error) => { this.isLoading.set(false); this.toastService.error(error?.error?.message || 'We could not load this item.', 'Item not loaded'); } }); }
+  private hasPhoto(): boolean { return !!this.selectedPhoto() || !!this.currentPhotoUrl(); }
 }

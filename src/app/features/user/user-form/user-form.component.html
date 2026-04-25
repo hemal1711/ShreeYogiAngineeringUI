@@ -4,7 +4,7 @@
   <div class="form-header">
     <div>
       <h1><i class="bi bi-person"></i> {{ pageTitle() }}</h1>
-      <p>Create users and assign non-system roles.</p>
+      <p>{{ isProfileMode() ? 'Update your account details.' : 'Create users and assign non-system roles.' }}</p>
     </div>
   </div>
 
@@ -103,7 +103,7 @@
           @if (isSubmitting()) {
             <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
           } @else {
-            <span>{{ correlationId() ? 'Update' : 'Create' }} User</span>
+            <span>{{ isProfileMode() ? 'Update Profile' : correlationId() ? 'Update User' : 'Create User' }}</span>
           }
         </button>
       </div>

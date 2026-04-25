@@ -56,8 +56,16 @@ private readonly fb = inject(FormBuilder);
     this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null);
     if (file) this.form.markAsDirty();
   }
+  removePhoto(input: HTMLInputElement): void {
+    input.value = '';
+    this.selectedPhoto.set(null);
+    this.selectedPhotoPreviewUrl.set(null);
+    this.currentPhotoUrl.set(null);
+    this.form.markAsDirty();
+  }
   onSubmit(): void {
     if (this.form.invalid) { Object.values(this.form.controls).forEach((c) => c.markAsTouched()); this.toastService.warning('Please complete required fields.', 'Item needs attention'); return; }
+    if (!this.hasPhoto()) { this.toastService.warning('Please upload an item photo before saving.', 'Photo required'); return; }
     const id = this.correlationId();
     const request = { ...this.form.value, photoUrl: this.currentPhotoUrl() ?? undefined };
     this.isSubmitting.set(true);
@@ -97,5 +105,9 @@ private readonly fb = inject(FormBuilder);
       },
       error: (error) => { this.isLoading.set(false); this.toastService.error(error?.error?.message || 'We could not load this item.', 'Item not loaded'); }
     });
+  }
+
+  private hasPhoto(): boolean {
+    return !!this.selectedPhoto() || !!this.currentPhotoUrl();
   }
 }

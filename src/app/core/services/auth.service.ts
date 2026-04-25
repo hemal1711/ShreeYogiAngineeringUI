@@ -130,6 +130,21 @@ export class AuthService {
     return this.currentUser();
   }
 
+  updateCurrentUserProfile(profile: Partial<Pick<CurrentUser, 'userName' | 'email' | 'phoneNumber' | 'fullName'>>): void {
+    const session = this.sessionState();
+    if (!session) {
+      return;
+    }
+
+    this.persistSession({
+      ...session,
+      user: {
+        ...session.user,
+        ...profile
+      }
+    });
+  }
+
   hasPermission(permission: string): boolean {
     return this.isSystemRole() || this.permissions().includes(permission);
   }

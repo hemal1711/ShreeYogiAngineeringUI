@@ -78,6 +78,24 @@ private readonly formBuilder = inject(FormBuilder);
     this.form.markAsDirty();
   }
 
+  toggleAllPermissions(checked: boolean): void {
+    this.selectedPermissionIds.set(checked
+      ? new Set(this.permissions().map((permission) => permission.correlationId))
+      : new Set()
+    );
+    this.form.markAsDirty();
+  }
+
+  areAllPermissionsSelected(): boolean {
+    const permissions = this.permissions();
+    return permissions.length > 0 && permissions.every((permission) => this.selectedPermissionIds().has(permission.correlationId));
+  }
+
+  areSomePermissionsSelected(): boolean {
+    const selectedCount = this.selectedPermissionIds().size;
+    return selectedCount > 0 && !this.areAllPermissionsSelected();
+  }
+
   getActionPermission(row: PermissionMatrixRow, action: PermissionAction): Permission | undefined {
     return row.actions[action];
   }

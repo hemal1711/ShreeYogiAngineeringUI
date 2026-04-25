@@ -33,8 +33,19 @@
       @if (canShowPermissionPicker) {
         <section class="permission-picker">
           <div class="permission-picker__header">
-            <h2>Permissions</h2>
-            <span>{{ selectedPermissionIds().size }} selected</span>
+            <div>
+              <h2>Permissions</h2>
+              <span>{{ selectedPermissionIds().size }} selected</span>
+            </div>
+            <label class="permission-picker__select-all">
+              <input
+                type="checkbox"
+                [checked]="areAllPermissionsSelected()"
+                [indeterminate]="areSomePermissionsSelected()"
+                (change)="toggleAllPermissions($any($event.target).checked)"
+              />
+              <span>Select all permissions</span>
+            </label>
           </div>
 
           <div class="permission-matrix">

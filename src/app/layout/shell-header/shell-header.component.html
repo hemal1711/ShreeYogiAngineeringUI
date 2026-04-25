@@ -20,14 +20,6 @@
   </div>
 
   <div class="shell-header__actions">
-    <button type="button" class="shell-header__icon-button" aria-label="Toggle theme">
-      <i class="bi bi-moon"></i>
-    </button>
-    <button type="button" class="shell-header__icon-button shell-header__notification" aria-label="Notifications">
-      <i class="bi bi-bell"></i>
-      <span>9+</span>
-    </button>
-
     @if (currentUser(); as user) {
       <div class="shell-header__menu">
         <button type="button" class="shell-header__profile" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
@@ -41,9 +33,9 @@
 
         @if (menuOpen()) {
           <div class="shell-header__dropdown">
-            <a routerLink="/dashboard" (click)="closeMenu()">
-              <i class="bi bi-house-door"></i>
-              <span>Home</span>
+            <a routerLink="/profile" (click)="closeMenu()">
+              <i class="bi bi-person"></i>
+              <span>Profile</span>
             </a>
             <button type="button" (click)="logout()">
               <i class="bi bi-box-arrow-right"></i>

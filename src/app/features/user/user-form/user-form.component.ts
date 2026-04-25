@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of, switchMap } from 'rxjs';
 import { PagedResponse, Role } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
@@ -24,6 +25,7 @@ export class UserFormComponent {
   private readonly destroyRef = inject(DestroyRef);
 private readonly formBuilder = inject(FormBuilder);
   private readonly accessControlService = inject(AccessControlService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialogService = inject(ConfirmationDialogService);
@@ -38,15 +40,20 @@ private readonly formBuilder = inject(FormBuilder);
   readonly isSubmitting = signal(false);
   readonly correlationId = signal<string | null>(null);
   readonly pageTitle = signal('Add User');
+  readonly isProfileMode = signal(false);
   readonly canManageRoles = this.permissionService.hasAny(['userrole.create', 'userrole.delete']);
   readonly canReadRoles = this.permissionService.has('role.read');
   readonly canReadUserRoles = this.permissionService.has('userrole.read');
-  readonly canShowRolePicker = this.canManageRoles && this.canReadRoles && this.canReadUserRoles;
+  get canShowRolePicker(): boolean {
+    return !this.isProfileMode() && this.canManageRoles && this.canReadRoles && this.canReadUserRoles;
+  }
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const isProfile = this.route.snapshot.routeConfig?.path === 'profile';
+    this.isProfileMode.set(isProfile);
+    const id = isProfile ? this.authService.currentUser()?.userCorrelationId ?? null : this.route.snapshot.paramMap.get('id');
     this.correlationId.set(id);
-    this.pageTitle.set(id ? 'Edit User' : 'Add User');
+    this.pageTitle.set(isProfile ? 'Profile' : id ? 'Edit User' : 'Add User');
 
     this.form = this.formBuilder.group({
       userName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -111,8 +118,16 @@ private readonly formBuilder = inject(FormBuilder);
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.toastService.success(id ? 'User updated successfully.' : 'User created successfully.', 'User saved');
-        this.router.navigate(['/users']);
+        if (this.isProfileMode()) {
+          this.authService.updateCurrentUserProfile({
+            userName: value.userName,
+            email: value.email,
+            phoneNumber: value.phoneNumber || '',
+            fullName: [value.firstName, value.lastName].filter(Boolean).join(' ') || value.userName
+          });
+        }
+        this.toastService.success(this.isProfileMode() ? 'Profile updated successfully.' : id ? 'User updated successfully.' : 'User created successfully.', this.isProfileMode() ? 'Profile saved' : 'User saved');
+        this.router.navigate([this.isProfileMode() ? '/dashboard' : '/users']);
       },
       error: (error) => {
         this.isSubmitting.set(false);
@@ -123,14 +138,14 @@ private readonly formBuilder = inject(FormBuilder);
 
   onCancel(): void {
     if (!this.form.dirty) {
-      this.router.navigate(['/users']);
+      this.router.navigate([this.isProfileMode() ? '/dashboard' : '/users']);
       return;
     }
 
-    this.dialogService.showWarning('Unsaved Changes', 'You have unsaved changes to this user.', 'Do you want to discard these changes and leave?')
+    this.dialogService.showWarning('Unsaved Changes', this.isProfileMode() ? 'You have unsaved changes to your profile.' : 'You have unsaved changes to this user.', 'Do you want to discard these changes and leave?')
       .then((confirmed) => {
         if (confirmed) {
-          this.router.navigate(['/users']);
+          this.router.navigate([this.isProfileMode() ? '/dashboard' : '/users']);
         }
       });
   }
@@ -162,6 +177,13 @@ private readonly formBuilder = inject(FormBuilder);
 
   private loadPage(userId: string | null): void {
     this.isLoading.set(true);
+    if (this.isProfileMode() && !userId) {
+      this.isLoading.set(false);
+      this.toastService.error('We could not find your profile in the current session.', 'Profile not loaded');
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
     const roles$ = this.canShowRolePicker ? this.accessControlService.getRoles(1, 200) : of(null);
     const user$ = userId ? this.accessControlService.getUser(userId) : of(null);
     const userRoles$ = userId && this.canShowRolePicker ? this.accessControlService.getRolesForUser(userId) : of(null);
@@ -172,7 +194,7 @@ private readonly formBuilder = inject(FormBuilder);
         this.roles.set(roleItems);
 
         if (user?.data) {
-          if (this.isSuperAdminUser(user.data.userName)) {
+          if (!this.isProfileMode() && this.isSuperAdminUser(user.data.userName)) {
             this.toastService.error('Superadmin user cannot be managed here.', 'User hidden');
             this.router.navigate(['/users']);
             return;

@@ -29,6 +29,26 @@
   font-weight: 700;
 }
 
+.permission-picker__select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--sp-touch-target);
+  margin: 0;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--sp-radius-sm);
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.permission-picker__select-all input {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
 .permission-matrix {
   width: 100%;
   overflow-x: auto;
@@ -131,8 +151,13 @@
 
 @media (max-width: 768px) {
   .permission-picker__header {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+  }
+
+  .permission-picker__select-all {
+    justify-content: center;
+    width: 100%;
   }
 
   .permission-matrix {

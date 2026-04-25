@@ -24,6 +24,11 @@ export const routes: Routes = [
         loadComponent: () => import('./auth/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
+        path: 'profile',
+        data: { title: 'Profile' },
+        loadComponent: () => import('./features/user/user-form/user-form.component').then(m => m.UserFormComponent)
+      },
+      {
         path: 'customers',
         canActivate: [permissionGuard],
         data: { permissions: ['customer.read'], title: 'Customers' },

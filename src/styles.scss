@@ -256,6 +256,31 @@ body .status-cards .out {
   color: #e60012;
 }
 
+body .photo-preview-wrap {
+  display: grid;
+  width: min(100%, 25rem);
+  max-width: 100%;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+body .photo-preview-wrap .photo-preview {
+  margin-top: 0;
+}
+
+body .photo-preview-wrap .photo-remove {
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  body .photo-preview-wrap,
+  body .photo-preview-wrap .photo-remove {
+    width: 100%;
+  }
+}
+
 @media (max-width: 900px) {
   body .summary-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
