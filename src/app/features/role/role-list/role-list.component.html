@@ -45,9 +45,14 @@
           <div class="mobile-data-card__header mobile-data-card__header--compact">
             <div class="mobile-data-card__title">
               <strong>{{ role.roleName }}</strong>
-              <span>{{ role.createdOn | date: 'mediumDate' }}</span>
             </div>
             <span class="badge" [ngClass]="getStatusBadge(role.isActive).class">{{ getStatusBadge(role.isActive).text }}</span>
+          </div>
+          <div class="mobile-data-card__grid mobile-data-card__grid--two">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Created</span>
+              <span>{{ role.createdOn | date: 'mediumDate' }}</span>
+            </div>
           </div>
           <div class="action-buttons mobile-data-card__actions">
             @if (canUpdate) { <a [routerLink]="['/roles/edit', role.correlationId]" class="btn btn-sm btn-outline-primary" title="Edit role"><i class="bi bi-pencil"></i></a> }

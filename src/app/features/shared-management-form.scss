@@ -163,9 +163,13 @@
 }
 
 @media (max-width: 640px) {
+  .management-form-page {
+    padding-inline: 0.75rem;
+  }
+
   .form-header,
   .management-form,
   .loading-state {
-    border-inline: 0;
+    border-radius: 0.75rem;
   }
 }

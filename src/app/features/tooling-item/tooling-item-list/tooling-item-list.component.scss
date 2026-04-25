@@ -1,6 +1,6 @@
 @use '../../shared-management';
 
-.item-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-width: 0; }
+.item-toolbar { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 
 .photo-thumb,
 .photo-empty { width: 3.25rem; height: 3.25rem; display: grid; place-items: center; padding: 0; overflow: hidden; border: 1px solid var(--sp-border); border-radius: var(--sp-radius-sm); background: #f8fafc; color: #64748b; }

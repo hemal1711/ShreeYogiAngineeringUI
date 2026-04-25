@@ -133,6 +133,12 @@ body .stock-filters .form-select {
   width: min(100%, 15rem);
 }
 
+body .stock-filters .btn {
+  flex: 0 0 auto;
+  min-height: var(--sp-touch-target);
+  justify-content: center;
+}
+
 body .stock-filters span {
   margin-left: auto;
   color: #64748b;
@@ -263,10 +269,11 @@ body .status-cards .out {
 @media (max-width: 640px) {
   body .stock-page {
     gap: 0.75rem;
+    padding-inline: 0.75rem;
   }
 
   body .stock-heading {
-    padding-inline: 0.75rem;
+    padding-inline: 0;
   }
 
   body .stock-heading h1 {
@@ -276,13 +283,17 @@ body .status-cards .out {
   body .stock-filters {
     align-items: stretch;
     flex-direction: column;
-    border-inline: 0;
+    border-radius: 0.75rem;
     padding: 1rem 0.75rem;
   }
 
   body .stock-filters .form-select {
     width: 100%;
     min-width: 0;
+  }
+
+  body .stock-filters .btn {
+    width: 100%;
   }
 
   body .stock-filters span {
@@ -300,7 +311,7 @@ body .status-cards .out {
 
   body .summary-cards article,
   body .status-cards article {
-    border-inline: 0;
+    border-radius: 0.75rem;
     padding: 1rem 0.9rem;
   }
 }

@@ -396,6 +396,13 @@
     width: 100%;
   }
 
+  .toolbar > .btn,
+  .search-box .btn {
+    width: 100%;
+    min-height: var(--sp-touch-target);
+    justify-content: center;
+  }
+
   .search-box i {
     top: 1.38rem;
   }
@@ -420,17 +427,9 @@
 }
 
 @media (max-width: 640px) {
-  .page-header,
-  .toolbar,
-  .table-responsive,
-  .loading-state,
-  .empty-state,
-  .pagination-container {
-    border-inline: 0;
-  }
-
   .management-page {
     gap: 0.75rem;
+    padding-inline: 0.75rem;
   }
 
   .management-table {
@@ -438,8 +437,16 @@
   }
 
   .mobile-data-card {
-    border-inline: 0;
-    border-radius: 0;
+    border-radius: 0.75rem;
+  }
+
+  .page-header,
+  .toolbar,
+  .table-responsive,
+  .loading-state,
+  .empty-state,
+  .pagination-container {
+    border-radius: 0.75rem;
   }
 
   .mobile-data-card__grid--two {

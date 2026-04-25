@@ -188,11 +188,11 @@ input {
   .login-page {
     justify-content: flex-start;
     gap: 1.75rem;
-    padding: 2.25rem 0 1rem;
+    padding: 2.25rem 0.75rem 1rem;
   }
 
   .login-hero {
-    padding-inline: 1rem;
+    padding-inline: 0.25rem;
   }
 
   .login-hero__mark {
@@ -201,8 +201,7 @@ input {
 
   .login-card {
     padding: 1.45rem;
-    border-inline: 0;
-    border-radius: 0;
+    border-radius: 0.75rem;
   }
 
   input,
