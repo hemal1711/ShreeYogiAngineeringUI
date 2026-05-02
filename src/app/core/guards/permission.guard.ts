@@ -6,6 +6,11 @@ export const permissionGuard: CanActivateFn = (route) => {
   const router = inject(Router);
   const permissionService = inject(PermissionService);
   const permissions = route.data?.['permissions'] as string[] | undefined;
+  const allPermissions = route.data?.['allPermissions'] as string[] | undefined;
+
+  if (allPermissions?.length) {
+    return permissionService.hasAll(allPermissions) ? true : router.createUrlTree(['/dashboard']);
+  }
 
   if (!permissions?.length || permissionService.hasAny(permissions)) {
     return true;

@@ -162,6 +162,19 @@ export class AuthService {
     return permissions.some((permission) => granted.includes(permission));
   }
 
+  hasAllPermissions(permissions: readonly string[]): boolean {
+    if (this.isSystemRole()) {
+      return true;
+    }
+
+    if (permissions.length === 0) {
+      return true;
+    }
+
+    const granted = this.permissions();
+    return permissions.every((permission) => granted.includes(permission));
+  }
+
   isAuthenticatedSync(): boolean {
     return this.isAuthenticated();
   }

@@ -1,0 +1,310 @@
+<div class="management-form-page production-entry-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="form-header">
+    <div>
+      <h1>{{ pageTitle() }}</h1>
+      <p>Start the production report first, then add and lock manual hourly entries.</p>
+    </div>
+    <span class="badge" [ngClass]="statusClass(reportStatus())">{{ reportStatus() }}</span>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading production report...</p>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form production-report-form">
+      <section class="form-card">
+        <div class="card-title">
+          <div>
+            <h2>Production Details</h2>
+            <p>Report header and operator login details.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="mb-3">
+            <label class="form-label">Report Date <span>*</span></label>
+            <input type="date" class="form-control" formControlName="reportDate" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Shift <span>*</span></label>
+            <select class="form-select" formControlName="shiftName">
+              <option value="">Select shift</option>
+              @for (shift of shifts; track shift) {
+                <option [value]="shift">{{ shift }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Machine Type <span>*</span></label>
+            <select class="form-select" formControlName="machineType">
+              <option value="">Select machine type</option>
+              @for (machineType of machineTypeOptions(); track machineType.correlationId) {
+                <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Machine Name <span>*</span></label>
+            <select class="form-select" formControlName="machineName" [class.is-invalid]="isFieldInvalid('machineName')">
+              <option value="">Select machine name</option>
+              @for (machineName of machineNames(); track machineName.correlationId) {
+                <option [value]="machineName.name">{{ machineName.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Item <span>*</span></label>
+            <select class="form-select" formControlName="manufacturingItemCorrelationId" [class.is-invalid]="isFieldInvalid('manufacturingItemCorrelationId')">
+              <option value="">Select item</option>
+              @for (item of items(); track item.correlationId) {
+                <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }} - {{ item.itemName }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Job / Process Name</label>
+            <input class="form-control" formControlName="jobName" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Operator <span>*</span></label>
+            <select class="form-select" formControlName="operatorUserCorrelationId" [class.is-invalid]="isFieldInvalid('operatorUserCorrelationId')">
+              <option value="">Select operator</option>
+              @for (user of users(); track user.correlationId) {
+                <option [value]="user.correlationId">{{ userDisplayName(user) }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Operator In Time <span>*</span></label>
+            <input type="time" class="form-control" formControlName="operatorInTime" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Operator Out Time</label>
+            <input type="time" class="form-control" formControlName="operatorOutTime" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="card-title">
+          <div>
+            <h2>Time & Downtime</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="mb-3">
+            <label class="form-label">Lunch Out</label>
+            <input type="time" class="form-control" formControlName="lunchOutTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Lunch In</label>
+            <input type="time" class="form-control" formControlName="lunchInTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Dinner Out</label>
+            <input type="time" class="form-control" formControlName="dinnerOutTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Dinner In</label>
+            <input type="time" class="form-control" formControlName="dinnerInTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Setup Start</label>
+            <input type="time" class="form-control" formControlName="setupStartTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Setup End</label>
+            <input type="time" class="form-control" formControlName="setupEndTime" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Idle Time Minutes</label>
+            <input type="number" min="0" step="1" class="form-control" formControlName="idleMinutes" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Idle Reason</label>
+            <select class="form-select" formControlName="idleReason">
+              <option value="">Select reason</option>
+              @for (reason of idleReasons; track reason) {
+                <option [value]="reason">{{ reason }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Machine Breakdown Minutes</label>
+            <input type="number" min="0" step="1" class="form-control" formControlName="machineBreakdownMinutes" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tool Breakdown Minutes</label>
+            <input type="number" min="0" step="1" class="form-control" formControlName="toolBreakdownMinutes" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="card-title">
+          <div>
+            <h2>Production Setting</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="mb-3">
+            <label class="form-label">Cycle Time Minute</label>
+            <input type="number" min="0.01" step="0.01" class="form-control" formControlName="cycleTimeMinutes" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Load / Unload Time Minute</label>
+            <input type="number" min="0" step="0.01" class="form-control" formControlName="loadUnloadTimeMinutes" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Parts Per Cycle</label>
+            <input type="number" min="1" step="1" class="form-control" formControlName="partsPerCycle" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Remarks</label>
+            <input class="form-control" formControlName="remarks" placeholder="Optional remarks" />
+          </div>
+
+          <div class="readonly-box">
+            <span>Per Hour Qty</span>
+            <strong>{{ form.controls.perHourQuantity.value | number:'1.2-2' }}</strong>
+          </div>
+          <div class="readonly-box">
+            <span>Running Hours</span>
+            <strong>{{ summary().runningHours | number:'1.2-2' }} hrs</strong>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-box good"><span>Total Production</span><strong>{{ summary().totalProduction | number:'1.0-2' }}</strong></div>
+          <div class="summary-box info"><span>Expected Qty / Nominal Production</span><strong>{{ summary().expectedQuantity | number:'1.0-0' }}</strong></div>
+          <div class="summary-box warn"><span>Difference Qty</span><strong>{{ summary().differenceQuantity | number:'1.0-2' }}</strong></div>
+          <div class="summary-box danger"><span>Reject %</span><strong>{{ summary().rejectPercent | number:'1.2-2' }}%</strong></div>
+          <div class="summary-box"><span>Efficiency %</span><strong>{{ summary().efficiencyPercent | number:'1.2-2' }}%</strong></div>
+          <div class="summary-box"><span>Time Status</span><strong>{{ summary().timeStatus }}</strong></div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="isSubmitting()" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting() || reportStatus() === 'Completed'">
+          @if (isSubmitting()) {
+            <span><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
+          } @else {
+            <span>Save Report</span>
+          }
+        </button>
+        @if (correlationId() && reportStatus() !== 'Completed') {
+          <button type="button" class="btn btn-success" [disabled]="isCompleting()" (click)="completeReport()">
+            @if (isCompleting()) {
+              <span><span class="spinner-border spinner-border-sm me-2"></span>Completing...</span>
+            } @else {
+              <span>Complete Report</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (correlationId()) {
+        <section class="form-card">
+          <div class="card-title">
+            <div>
+              <h2>Manual Hourly Entries</h2>
+              <p>Each saved entry is submitted and locked.</p>
+            </div>
+            @if (reportStatus() !== 'Completed') {
+              <button type="button" class="btn btn-primary" (click)="addManualEntry()">
+                <i class="bi bi-plus-circle"></i>
+                Add Hour Slot
+              </button>
+            }
+          </div>
+
+          @if (entriesArray.length > 0) {
+            <div class="table-wrap" formArrayName="entries">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time Slot</th>
+                    <th>OK Qty</th>
+                    <th>Reject Qty</th>
+                    <th>Reject Reason</th>
+                    <th>Remarks</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (entry of entriesArray.controls; track entry) {
+                    <tr [formGroupName]="$index">
+                      <td class="time-slot">
+                        <input type="time" class="form-control form-control-sm" formControlName="fromTime" />
+                        <span>-</span>
+                        <input type="time" class="form-control form-control-sm" formControlName="toTime" />
+                      </td>
+                      <td><input type="number" min="0" step="0.01" class="form-control form-control-sm" formControlName="okQuantity" /></td>
+                      <td><input type="number" min="0" step="0.01" class="form-control form-control-sm" formControlName="rejectedQuantity" /></td>
+                      <td>
+                        <select class="form-select form-select-sm" formControlName="rejectReason">
+                          <option value="">-</option>
+                          @for (reason of rejectReasons; track reason) {
+                            <option [value]="reason">{{ reason }}</option>
+                          }
+                        </select>
+                      </td>
+                      <td><input class="form-control form-control-sm" formControlName="remarks" placeholder="Remarks" /></td>
+                      <td><span class="badge" [ngClass]="statusClass(entryDisplayStatus($index))">{{ entryDisplayStatus($index) }}</span></td>
+                      <td>
+                        @if (isEntryLocked($index)) {
+                          <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="reportStatus() === 'Completed' || unlockingEntryId() === entry.getRawValue().correlationId" (click)="unlockEntry($index)">
+                            @if (unlockingEntryId() === entry.getRawValue().correlationId) {
+                              <span class="spinner-border spinner-border-sm"></span>
+                            } @else {
+                              <span>Unlock</span>
+                            }
+                          </button>
+                        } @else {
+                          <button type="button" class="btn btn-sm btn-primary" [disabled]="savingEntryIndex() === $index" (click)="saveEntry($index)">
+                            @if (savingEntryIndex() === $index) {
+                              <span class="spinner-border spinner-border-sm"></span>
+                            } @else {
+                              <span>Save & Lock</span>
+                            }
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-state">
+              <i class="bi bi-clock-history"></i>
+              <h3>No Hourly Entries</h3>
+              <p>Add the first manual hour slot after production starts.</p>
+            </div>
+          }
+        </section>
+      }
+    </form>
+  }
+</div>

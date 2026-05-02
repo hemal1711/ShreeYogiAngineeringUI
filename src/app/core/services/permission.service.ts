@@ -16,4 +16,8 @@ export class PermissionService {
   hasAny(permissions: readonly string[]): boolean {
     return this.authService.hasAnyPermission(permissions);
   }
+
+  hasAll(permissions: readonly string[]): boolean {
+    return this.authService.hasAllPermissions(permissions);
+  }
 }

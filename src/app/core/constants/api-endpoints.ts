@@ -7,6 +7,10 @@ export const API_ENDPOINTS = {
     refreshToken: '/auth/refreshtoken',
     logout: '/auth/logout'
   },
+  notifications: {
+    registerDevice: '/notifications/register-device',
+    unregisterDevice: '/notifications/unregister-device'
+  },
   roles: {
     list: '/roles',
     byId: (correlationId: string) => `/roles/${correlationId}`,
@@ -45,6 +49,17 @@ export const API_ENDPOINTS = {
   manufacturingOperations: {
     list: '/manufacturingoperations',
     byId: (correlationId: string) => `/manufacturingoperations/${correlationId}`
+  },
+  productionReports: {
+    list: '/productionreports',
+    byId: (correlationId: string) => `/productionreports/${correlationId}`,
+    entries: (correlationId: string) => `/productionreports/${correlationId}/entries`,
+    unlockEntry: (correlationId: string, entryCorrelationId: string) => `/productionreports/${correlationId}/entries/${entryCorrelationId}/unlock`,
+    complete: (correlationId: string) => `/productionreports/${correlationId}/complete`
+  },
+  machineMasters: {
+    types: '/machinemasters/types',
+    names: '/machinemasters/names'
   },
   toolingItems: {
     list: '/toolingitems',

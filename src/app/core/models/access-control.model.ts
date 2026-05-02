@@ -95,6 +95,25 @@ export interface UserRoleRequest {
   roleCorrelationId: string;
 }
 
+export interface RegisterDeviceTokenRequest {
+  token: string;
+  platform?: string;
+  browser?: string;
+  deviceName?: string;
+}
+
+export interface UnregisterDeviceTokenRequest {
+  token: string;
+}
+
+export interface DeviceToken {
+  correlationId: string;
+  token: string;
+  isActive: boolean;
+  createdOn: string;
+  lastSeenOn?: string;
+}
+
 export interface Customer {
   correlationId: string;
   customerName: string;
@@ -141,6 +160,24 @@ export interface ManufacturingItemRequest {
   photoUrl?: string;
   lowStockThreshold: number;
   isActive: boolean;
+}
+
+export interface MachineType {
+  correlationId: string;
+  typeName: string;
+  description?: string;
+  isActive: boolean;
+  createdOn: string;
+}
+
+export interface MachineName {
+  correlationId: string;
+  machineTypeCorrelationId: string;
+  machineType: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdOn: string;
 }
 
 export interface ToolingItem {
@@ -206,6 +243,110 @@ export interface ManufacturingOperationFilter {
   operationType?: string;
   dateFrom?: string;
   dateTo?: string;
+  search?: string;
+}
+
+export interface ProductionReportEntry {
+  correlationId?: string;
+  fromTime: string;
+  toTime: string;
+  okQuantity: number;
+  rejectedQuantity: number;
+  entryStatus?: string;
+  rejectReason?: string;
+  operatorSign?: string;
+  remarks?: string;
+  submittedAt?: string;
+  lockedAt?: string;
+}
+
+export interface ProductionReport {
+  correlationId: string;
+  manufacturingItemCorrelationId: string;
+  itemCode: string;
+  itemName: string;
+  customerCorrelationId: string;
+  customerName: string;
+  customerCode: string;
+  machineType: string;
+  machineName: string;
+  shiftName: string;
+  reportDate: string;
+  jobName?: string;
+  operatorUserCorrelationId?: string;
+  operatorName?: string;
+  operatorInTime?: string;
+  lunchOutTime?: string;
+  lunchInTime?: string;
+  setupStartTime?: string;
+  setupEndTime?: string;
+  dinnerOutTime?: string;
+  dinnerInTime?: string;
+  operatorOutTime?: string;
+  idleMinutes?: number;
+  idleReason?: string;
+  cycleTimeMinutes?: number;
+  loadUnloadTimeMinutes?: number;
+  partsPerCycle?: number;
+  perHourQuantity?: number;
+  hourlyEntryMode?: string;
+  reportStatus?: string;
+  rejectReason?: string;
+  machineBreakdownMinutes?: number;
+  toolBreakdownMinutes?: number;
+  presenceHours?: number;
+  lunchBreakMinutes?: number;
+  dinnerBreakMinutes?: number;
+  setupMinutes?: number;
+  actualWorkingHours?: number;
+  runningHours?: number;
+  expectedQuantity?: number;
+  differenceQuantity?: number;
+  efficiencyPercent?: number;
+  totalOkQuantity: number;
+  totalRejectedQuantity: number;
+  remarks?: string;
+  entries: ProductionReportEntry[];
+  createdOn: string;
+}
+
+export interface ProductionReportRequest {
+  manufacturingItemCorrelationId: string;
+  machineType: string;
+  machineName: string;
+  shiftName: string;
+  reportDate: string;
+  jobName?: string;
+  operatorUserCorrelationId?: string | null;
+  operatorInTime?: string | null;
+  lunchOutTime?: string | null;
+  lunchInTime?: string | null;
+  setupStartTime?: string | null;
+  setupEndTime?: string | null;
+  dinnerOutTime?: string | null;
+  dinnerInTime?: string | null;
+  operatorOutTime?: string | null;
+  idleMinutes?: number | null;
+  idleReason?: string;
+  cycleTimeMinutes?: number | null;
+  loadUnloadTimeMinutes?: number | null;
+  partsPerCycle?: number | null;
+  perHourQuantity?: number | null;
+  hourlyEntryMode?: string;
+  reportStatus?: string;
+  rejectReason?: string;
+  machineBreakdownMinutes?: number | null;
+  toolBreakdownMinutes?: number | null;
+  remarks?: string;
+  entries: ProductionReportEntry[];
+}
+
+export interface ProductionReportFilter {
+  customerCorrelationId?: string;
+  itemCorrelationId?: string;
+  machineType?: string;
+  reportDateFrom?: string;
+  reportDateTo?: string;
   search?: string;
 }
 

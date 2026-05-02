@@ -5,6 +5,7 @@ import { ShellSidebarComponent } from '../shell-sidebar/shell-sidebar.component'
 import { ShellContentbarComponent } from '../shell-contentbar/shell-contentbar.component';
 import { ShellFooterComponent } from '../shell-footer/shell-footer.component';
 import { LayoutService } from '../layout.service';
+import { PushNotificationService } from '../../core/services/push-notification.service';
 
 @Component({
   selector: 'app-shell',
@@ -22,6 +23,12 @@ import { LayoutService } from '../layout.service';
 })
 export class ShellComponent {
   readonly layout = inject(LayoutService);
+  private readonly pushNotificationService = inject(PushNotificationService);
+
+  constructor() {
+    void this.pushNotificationService.initializeForLoggedInUser();
+  }
+
   @HostListener('window:resize')
   onResize(): void {
     if (window.innerWidth > 960) {

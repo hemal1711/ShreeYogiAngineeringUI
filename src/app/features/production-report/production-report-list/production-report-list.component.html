@@ -1,0 +1,223 @@
+<div class="management-page production-report-page">
+  <app-breadcrumb></app-breadcrumb>
+
+  <div class="page-header">
+    <div>
+      <h1>Production Reports</h1>
+      <p>Capture daily CNC and VMC production with machine and time-slot output.</p>
+    </div>
+
+    @if (canCreate) {
+      <a routerLink="/production-reports/add" class="btn btn-primary">
+        <i class="bi bi-plus"></i>
+        Add Report
+      </a>
+    }
+  </div>
+
+  <section class="report-filters">
+    <h2><i class="bi bi-funnel"></i> Filters</h2>
+
+    <div class="report-filters__grid">
+      <select class="form-select" [(ngModel)]="filter.customerCorrelationId" (change)="onFilter()">
+        <option value="">All Customers</option>
+        @for (customer of customers(); track customer.correlationId) {
+          <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+        }
+      </select>
+
+      <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()">
+        <option value="">All Items</option>
+        @for (item of items(); track item.correlationId) {
+          <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }}</option>
+        }
+      </select>
+
+      <select class="form-select" [(ngModel)]="filter.machineType" (change)="onFilter()">
+        <option value="">All Machines</option>
+        @for (machineType of machineTypes(); track machineType.correlationId) {
+          <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
+        }
+      </select>
+
+      <input class="form-control" type="date" [(ngModel)]="filter.reportDateFrom" (change)="onFilter()" />
+      <input class="form-control" type="date" [(ngModel)]="filter.reportDateTo" (change)="onFilter()" />
+    </div>
+
+    <p>{{ totalCount() }} reports found</p>
+  </section>
+
+  <div class="toolbar report-toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input class="form-control" type="text" placeholder="Search machine or item..." [(ngModel)]="filter.search" (keyup.enter)="onFilter()" />
+      <button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onFilter()">Search</button>
+    </div>
+
+    <button type="button" class="btn btn-outline-primary" (click)="exportCsv()">
+      <i class="bi bi-download"></i>
+      Export CSV
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading production reports...</p>
+    </div>
+  }
+
+  @if (!isLoading() && reports().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-clock-history"></i>
+      <h3>No Production Reports Found</h3>
+      <p>Add the first CNC or VMC production report.</p>
+    </div>
+  }
+
+  @if (!isLoading() && reports().length > 0) {
+    <div class="mobile-data-list">
+      @for (report of reports(); track report.correlationId) {
+        <article class="mobile-data-card">
+          <div class="mobile-data-card__header mobile-data-card__header--compact">
+            <div class="mobile-data-card__title">
+              <strong>{{ report.machineType }} - {{ report.machineName }}</strong>
+              <span>{{ formatDate(report.reportDate) }} | {{ report.shiftName }}</span>
+              <small>{{ report.itemCode }} | {{ report.customerCode }}</small>
+            </div>
+            <span class="badge" [ngClass]="statusClass(report.reportStatus)">{{ report.reportStatus || 'Open' }}</span>
+          </div>
+
+          <div class="mobile-data-card__grid mobile-data-card__grid--two">
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Slots</span>
+              <span>{{ report.entries.length }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">OK Qty</span>
+              <span><strong>{{ report.totalOkQuantity }}</strong></span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Rejected Qty</span>
+              <span>{{ report.totalRejectedQuantity }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Time Slots</span>
+              <span>{{ slotSummary(report) || '-' }}</span>
+            </div>
+          </div>
+
+          <div class="action-buttons mobile-data-card__actions">
+            @if (canUpdate) {
+              <a [routerLink]="['/production-reports/edit', report.correlationId]" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i>
+              </a>
+            }
+            @if (canDelete) {
+              <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === report.correlationId" (click)="onDelete(report)">
+                @if (deletingId() === report.correlationId) {
+                  <span class="spinner-border spinner-border-sm"></span>
+                } @else {
+                  <i class="bi bi-trash"></i>
+                }
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="table-responsive desktop-data-table">
+      <table class="management-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Machine</th>
+            <th>Shift</th>
+            <th>Item</th>
+            <th>Customer</th>
+            <th>OK Qty</th>
+            <th>Rejected Qty</th>
+            <th>Slots</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (report of reports(); track report.correlationId) {
+            <tr>
+              <td>{{ formatDate(report.reportDate) }}</td>
+              <td><span class="badge" [ngClass]="statusClass(report.reportStatus)">{{ report.reportStatus || 'Open' }}</span></td>
+              <td>
+                <strong>{{ report.machineType }}</strong>
+                <div class="muted">{{ report.machineName }}</div>
+              </td>
+              <td>{{ report.shiftName }}</td>
+              <td>
+                <strong>{{ report.itemCode }}</strong>
+                <div class="muted">{{ report.itemName }}</div>
+              </td>
+              <td>{{ report.customerCode }}</td>
+              <td><strong>{{ report.totalOkQuantity }}</strong></td>
+              <td>{{ report.totalRejectedQuantity }}</td>
+              <td class="slot-cell">{{ slotSummary(report) || '-' }}</td>
+              <td>
+                <div class="action-buttons">
+                  @if (canUpdate) {
+                    <a [routerLink]="['/production-reports/edit', report.correlationId]" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  }
+                  @if (canDelete) {
+                    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === report.correlationId" (click)="onDelete(report)">
+                      @if (deletingId() === report.correlationId) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <i class="bi bi-trash"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages > 1) {
+      <div class="pagination-container">
+        <nav>
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="pageNumber() === 1">
+              <button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(1)">
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+            </li>
+            <li class="page-item" [class.disabled]="pageNumber() === 1">
+              <button type="button" class="page-link" [disabled]="pageNumber() === 1" (click)="onPageChange(pageNumber() - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            @for (page of pageRange; track page) {
+              <li class="page-item" [class.active]="page === pageNumber()">
+                <button type="button" class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+              </li>
+            }
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages">
+              <button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(pageNumber() + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+            <li class="page-item" [class.disabled]="pageNumber() === totalPages">
+              <button type="button" class="page-link" [disabled]="pageNumber() === totalPages" (click)="onPageChange(totalPages)">
+                <i class="bi bi-chevron-double-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+        <div class="pagination-info">Page {{ pageNumber() }} of {{ totalPages }} ({{ totalCount() }} total)</div>
+      </div>
+    }
+  }
+</div>

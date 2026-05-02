@@ -137,6 +137,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/manufacturing-operation/manufacturing-operation-form/manufacturing-operation-form.component').then(m => m.ManufacturingOperationFormComponent)
       },
       {
+        path: 'production-reports',
+        canActivate: [permissionGuard],
+        data: { allPermissions: ['productionreport.read', 'machinetype.read'], title: 'Production Reports' },
+        loadComponent: () => import('./features/production-report/production-report-list/production-report-list.component').then(m => m.ProductionReportListComponent)
+      },
+      {
+        path: 'production-reports/add',
+        canActivate: [permissionGuard],
+        data: { allPermissions: ['productionreport.create', 'machinetype.read', 'machinename.read'], title: 'Add Production Report' },
+        loadComponent: () => import('./features/production-report/production-report-form/production-report-form.component').then(m => m.ProductionReportFormComponent)
+      },
+      {
+        path: 'production-reports/edit/:id',
+        canActivate: [permissionGuard],
+        data: { allPermissions: ['productionreport.update', 'machinetype.read', 'machinename.read'], title: 'Edit Production Report' },
+        loadComponent: () => import('./features/production-report/production-report-form/production-report-form.component').then(m => m.ProductionReportFormComponent)
+      },
+      {
         path: 'manufacturing-stock',
         canActivate: [permissionGuard],
         data: { permissions: ['manufacturingoperation.read'], title: 'Manufacturing Stock' },

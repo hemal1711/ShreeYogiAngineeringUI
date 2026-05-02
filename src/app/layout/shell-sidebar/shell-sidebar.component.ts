@@ -12,7 +12,8 @@ interface MenuItem {
   icon: string;
   link?: string;
   permissions?: readonly string[];
-  children?: readonly { label: string; icon?: string; link: string; permissions?: readonly string[] }[];
+  allPermissions?: readonly string[];
+  children?: readonly { label: string; icon?: string; link: string; permissions?: readonly string[]; allPermissions?: readonly string[] }[];
 }
 
 interface MenuSection {
@@ -68,10 +69,11 @@ export class ShellSidebarComponent {
         {
           label: 'Mfg. Items',
           icon: 'bi-box-seam',
-          permissions: ['manufacturingitem.read', 'manufacturingitem.create', 'manufacturingoperation.read'],
+          permissions: ['manufacturingitem.read', 'manufacturingitem.create', 'manufacturingoperation.read', 'productionreport.read'],
           children: [
             { label: 'Mfg. Items', icon: 'bi-box-seam', link: '/manufacturing-items', permissions: ['manufacturingitem.read'] },
             { label: 'Mfg. Operations', icon: 'bi-box-seam', link: '/manufacturing-operations', permissions: ['manufacturingoperation.read'] },
+            { label: 'Production Reports', icon: 'bi-clock-history', link: '/production-reports', allPermissions: ['productionreport.read', 'machinetype.read'] },
             { label: 'Stock (Party-wise)', icon: 'bi-clipboard-data', link: '/manufacturing-stock', permissions: ['manufacturingoperation.read'] },
             { label: 'Add Mfg. Item', icon: 'bi-plus-circle', link: '/manufacturing-items/add', permissions: ['manufacturingitem.create'] }
           ]
@@ -151,12 +153,12 @@ export class ShellSidebarComponent {
   }
 
   canShowItem(item: MenuItem): boolean {
-    const childVisible = item.children?.some((child) => this.canShowPermissions(child.permissions)) ?? false;
-    return childVisible || this.canShowPermissions(item.permissions);
+    const childVisible = item.children?.some((child) => this.canShowChild(child.permissions, child.allPermissions)) ?? false;
+    return childVisible || this.canShowPermissions(item.permissions, item.allPermissions);
   }
 
-  canShowChild(permissions?: readonly string[]): boolean {
-    return this.canShowPermissions(permissions);
+  canShowChild(permissions?: readonly string[], allPermissions?: readonly string[]): boolean {
+    return this.canShowPermissions(permissions, allPermissions);
   }
 
   closeMobileSidebar(): void {
@@ -179,7 +181,11 @@ export class ShellSidebarComponent {
     this.expandedItems.set(next);
   }
 
-  private canShowPermissions(permissions?: readonly string[]): boolean {
+  private canShowPermissions(permissions?: readonly string[], allPermissions?: readonly string[]): boolean {
+    if (allPermissions?.length) {
+      return this.permissionService.hasAll(allPermissions);
+    }
+
     return !permissions?.length || this.permissionService.hasAny(permissions);
   }
 }

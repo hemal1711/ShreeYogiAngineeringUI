@@ -49,7 +49,7 @@
               @if ((!layout.sidebarCollapsed() || layout.mobileSidebarOpen()) && isExpanded(item.label)) {
                 <div class="shell-sidebar__subitems">
                   @for (child of item.children; track child.link) {
-                    @if (canShowChild(child.permissions)) {
+                    @if (canShowChild(child.permissions, child.allPermissions)) {
                     <a
                       [routerLink]="child.link"
                       [ngClass]="{ 'is-active': isActive(child.link) }"

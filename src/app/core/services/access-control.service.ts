@@ -15,9 +15,15 @@ import {
   InstrumentIssueRequest,
   InstrumentRequest,
   ManufacturingItem,
+  MachineName,
+  MachineType,
   ManufacturingOperation,
   ManufacturingOperationFilter,
   ManufacturingOperationRequest,
+  ProductionReport,
+  ProductionReportEntry,
+  ProductionReportFilter,
+  ProductionReportRequest,
   ManufacturingStockSummary,
   ManufacturingItemRequest,
   DashboardSummary,
@@ -27,6 +33,7 @@ import {
   RoleDetail,
   RolePermissionAssignRequest,
   RoleRequest,
+  RegisterDeviceTokenRequest,
   ToolingItem,
   ToolingOperation,
   ToolingOperationFilter,
@@ -36,6 +43,8 @@ import {
   User,
   UserCreateRequest,
   UserDetail,
+  DeviceToken,
+  UnregisterDeviceTokenRequest,
   UserRole,
   UserRoleRequest,
   UserUpdateRequest
@@ -49,6 +58,14 @@ export class AccessControlService {
 
   getDashboardSummary(): Observable<ApiResponse<DashboardSummary>> {
     return this.http.get<ApiResponse<DashboardSummary>>(API_ENDPOINTS.dashboard.summary);
+  }
+
+  registerDeviceToken(request: RegisterDeviceTokenRequest): Observable<ApiResponse<DeviceToken>> {
+    return this.http.post<ApiResponse<DeviceToken>>(API_ENDPOINTS.notifications.registerDevice, request);
+  }
+
+  unregisterDeviceToken(request: UnregisterDeviceTokenRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(API_ENDPOINTS.notifications.unregisterDevice, request);
   }
 
   getRoles(page = 1, pageSize = 10, search?: string): Observable<ApiResponse<PagedResponse<Role>>> {
@@ -205,6 +222,18 @@ export class AccessControlService {
     return this.http.get<ApiResponse<ManufacturingItem>>(API_ENDPOINTS.manufacturingItems.byId(correlationId));
   }
 
+  getMachineTypes(): Observable<ApiResponse<MachineType[]>> {
+    return this.http.get<ApiResponse<MachineType[]>>(API_ENDPOINTS.machineMasters.types);
+  }
+
+  getMachineNames(machineType?: string): Observable<ApiResponse<MachineName[]>> {
+    let params = new HttpParams();
+    if (machineType?.trim()) {
+      params = params.set('machineType', machineType.trim());
+    }
+    return this.http.get<ApiResponse<MachineName[]>>(API_ENDPOINTS.machineMasters.names, { params });
+  }
+
   createManufacturingItem(request: ManufacturingItemRequest, photo?: File | null): Observable<ApiResponse<ManufacturingItem>> {
     return this.http.post<ApiResponse<ManufacturingItem>>(API_ENDPOINTS.manufacturingItems.list, this.toManufacturingFormData(request, photo));
   }
@@ -237,6 +266,40 @@ export class AccessControlService {
 
   deleteManufacturingOperation(correlationId: string): Observable<ApiResponse<boolean>> {
     return this.http.delete<ApiResponse<boolean>>(API_ENDPOINTS.manufacturingOperations.byId(correlationId));
+  }
+
+  getProductionReports(page = 1, pageSize = 10, filter: ProductionReportFilter = {}): Observable<ApiResponse<PagedResponse<ProductionReport>>> {
+    return this.http.get<ApiResponse<PagedResponse<ProductionReport>>>(API_ENDPOINTS.productionReports.list, {
+      params: this.operationParams(page, pageSize, filter)
+    });
+  }
+
+  getProductionReport(correlationId: string): Observable<ApiResponse<ProductionReport>> {
+    return this.http.get<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.byId(correlationId));
+  }
+
+  createProductionReport(request: ProductionReportRequest): Observable<ApiResponse<ProductionReport>> {
+    return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.list, request);
+  }
+
+  updateProductionReport(correlationId: string, request: ProductionReportRequest): Observable<ApiResponse<ProductionReport>> {
+    return this.http.put<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.byId(correlationId), request);
+  }
+
+  saveProductionReportEntry(correlationId: string, request: ProductionReportEntry): Observable<ApiResponse<ProductionReport>> {
+    return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.entries(correlationId), request);
+  }
+
+  unlockProductionReportEntry(correlationId: string, entryCorrelationId: string): Observable<ApiResponse<ProductionReport>> {
+    return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.unlockEntry(correlationId, entryCorrelationId), {});
+  }
+
+  completeProductionReport(correlationId: string, operatorOutTime: string | null): Observable<ApiResponse<ProductionReport>> {
+    return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.complete(correlationId), { operatorOutTime });
+  }
+
+  deleteProductionReport(correlationId: string): Observable<ApiResponse<boolean>> {
+    return this.http.delete<ApiResponse<boolean>>(API_ENDPOINTS.productionReports.byId(correlationId));
   }
 
   getManufacturingStockSummary(filter: { customerCorrelationId?: string; itemCorrelationId?: string }): Observable<ApiResponse<ManufacturingStockSummary[]>> {
@@ -431,9 +494,9 @@ export class AccessControlService {
     return formData;
   }
 
-  private operationParams(page: number, pageSize: number, filter: ManufacturingOperationFilter | ToolingOperationFilter | InstrumentIssueFilter): HttpParams {
+  private operationParams(page: number, pageSize: number, filter: object): HttpParams {
     let params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
-    Object.entries(filter).forEach(([key, value]) => {
+    Object.entries(filter as Record<string, unknown>).forEach(([key, value]) => {
       if (value !== undefined && value !== null && String(value).trim() !== '') {
         params = params.set(key, String(value).trim());
       }

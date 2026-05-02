@@ -1,0 +1,58 @@
+@use '../../shared-management';
+
+.report-filters {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius);
+  background: var(--sp-surface);
+}
+
+.report-filters h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.report-filters__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.report-filters__grid .form-select,
+.report-filters__grid .form-control {
+  width: min(100%, 15rem);
+}
+
+.report-filters p,
+.muted {
+  margin: 0.9rem 0 0;
+  color: #64748b;
+}
+
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.slot-cell {
+  max-width: 18rem;
+  white-space: normal;
+}
+
+@media (max-width: 768px) {
+  .report-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-filters__grid .form-select,
+  .report-filters__grid .form-control {
+    width: 100%;
+  }
+}
