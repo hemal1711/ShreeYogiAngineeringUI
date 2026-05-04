@@ -274,6 +274,10 @@ export class AccessControlService {
     });
   }
 
+  getProductionReportItemLookups(): Observable<ApiResponse<ManufacturingItem[]>> {
+    return this.http.get<ApiResponse<ManufacturingItem[]>>(API_ENDPOINTS.productionReports.itemLookups);
+  }
+
   getProductionReport(correlationId: string): Observable<ApiResponse<ProductionReport>> {
     return this.http.get<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.byId(correlationId));
   }
@@ -292,6 +296,10 @@ export class AccessControlService {
 
   unlockProductionReportEntry(correlationId: string, entryCorrelationId: string): Observable<ApiResponse<ProductionReport>> {
     return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.unlockEntry(correlationId, entryCorrelationId), {});
+  }
+
+  reopenMissedProductionReportEntry(correlationId: string, entryCorrelationId: string): Observable<ApiResponse<ProductionReport>> {
+    return this.http.post<ApiResponse<ProductionReport>>(API_ENDPOINTS.productionReports.reopenMissedEntry(correlationId, entryCorrelationId), {});
   }
 
   completeProductionReport(correlationId: string, operatorOutTime: string | null): Observable<ApiResponse<ProductionReport>> {

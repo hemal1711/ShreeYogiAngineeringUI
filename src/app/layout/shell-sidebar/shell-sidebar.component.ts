@@ -73,7 +73,7 @@ export class ShellSidebarComponent {
           children: [
             { label: 'Mfg. Items', icon: 'bi-box-seam', link: '/manufacturing-items', permissions: ['manufacturingitem.read'] },
             { label: 'Mfg. Operations', icon: 'bi-box-seam', link: '/manufacturing-operations', permissions: ['manufacturingoperation.read'] },
-            { label: 'Production Reports', icon: 'bi-clock-history', link: '/production-reports', allPermissions: ['productionreport.read', 'machinetype.read'] },
+            { label: 'Production Reports', icon: 'bi-clock-history', link: '/production-reports', permissions: ['productionreport.read'] },
             { label: 'Stock (Party-wise)', icon: 'bi-clipboard-data', link: '/manufacturing-stock', permissions: ['manufacturingoperation.read'] },
             { label: 'Add Mfg. Item', icon: 'bi-plus-circle', link: '/manufacturing-items/add', permissions: ['manufacturingitem.create'] }
           ]

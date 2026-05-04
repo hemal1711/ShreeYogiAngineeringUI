@@ -139,19 +139,19 @@ export const routes: Routes = [
       {
         path: 'production-reports',
         canActivate: [permissionGuard],
-        data: { allPermissions: ['productionreport.read', 'machinetype.read'], title: 'Production Reports' },
+        data: { permissions: ['productionreport.read'], title: 'Production Reports' },
         loadComponent: () => import('./features/production-report/production-report-list/production-report-list.component').then(m => m.ProductionReportListComponent)
       },
       {
         path: 'production-reports/add',
         canActivate: [permissionGuard],
-        data: { allPermissions: ['productionreport.create', 'machinetype.read', 'machinename.read'], title: 'Add Production Report' },
+        data: { permissions: ['productionreport.create'], title: 'Add Production Report' },
         loadComponent: () => import('./features/production-report/production-report-form/production-report-form.component').then(m => m.ProductionReportFormComponent)
       },
       {
         path: 'production-reports/edit/:id',
         canActivate: [permissionGuard],
-        data: { allPermissions: ['productionreport.update', 'machinetype.read', 'machinename.read'], title: 'Edit Production Report' },
+        data: { permissions: ['productionreport.update'], title: 'Edit Production Report' },
         loadComponent: () => import('./features/production-report/production-report-form/production-report-form.component').then(m => m.ProductionReportFormComponent)
       },
       {

@@ -41,8 +41,33 @@
 }
 
 .slot-cell {
-  max-width: 18rem;
+  max-width: 22rem;
   white-space: normal;
+}
+
+.metric-stack {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 9rem;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.metric-stack strong {
+  color: #1e293b;
+}
+
+.metric-good {
+  color: #047857;
+}
+
+.metric-warn {
+  color: #b45309;
+}
+
+.metric-danger {
+  color: #b91c1c;
 }
 
 @media (max-width: 768px) {

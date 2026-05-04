@@ -51,9 +51,11 @@ export class ProductionReportListComponent {
     search: ''
   };
 
-  readonly canCreate = this.permissionService.hasAll(['productionreport.create', 'machinetype.read', 'machinename.read']);
-  readonly canUpdate = this.permissionService.hasAll(['productionreport.update', 'machinetype.read', 'machinename.read']);
+  readonly canCreate = this.permissionService.has('productionreport.create');
+  readonly canUpdate = this.permissionService.has('productionreport.update');
   readonly canDelete = this.permissionService.has('productionreport.delete');
+  readonly canReadCustomers = this.permissionService.has('customer.read');
+  readonly canReadManufacturingItems = this.permissionService.has('manufacturingitem.read');
 
   constructor() {
     this.loadLookups();
@@ -71,13 +73,17 @@ export class ProductionReportListComponent {
   }
 
   loadLookups(): void {
-    this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      this.customers.set((response.data as PagedResponse<Customer> | undefined)?.items ?? []);
-    });
+    if (this.canReadCustomers) {
+      this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+        this.customers.set((response.data as PagedResponse<Customer> | undefined)?.items ?? []);
+      });
+    }
 
-    this.service.getManufacturingItems(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      this.items.set((response.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? []);
-    });
+    if (this.canReadManufacturingItems) {
+      this.service.getManufacturingItems(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+        this.items.set((response.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? []);
+      });
+    }
 
     this.service.getMachineTypes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
       this.machineTypes.set((response.data as MachineType[] | undefined) ?? []);
@@ -135,7 +141,35 @@ export class ProductionReportListComponent {
 
   exportCsv(): void {
     const rows = [
-      ['Date', 'Status', 'Machine Type', 'Machine Name', 'Shift', 'Item Code', 'Customer', 'OK Qty', 'Rejected Qty', 'Slots'],
+      [
+        'Date',
+        'Status',
+        'Machine Type',
+        'Machine Name',
+        'Shift',
+        'Item Code',
+        'Customer',
+        'Operator',
+        'Presence Hours',
+        'Actual Working Hours',
+        'Running Hours',
+        'Lunch Break Minutes',
+        'Dinner Break Minutes',
+        'Setup Minutes',
+        'Idle Minutes',
+        'Machine Breakdown Minutes',
+        'Tool Breakdown Minutes',
+        'Total Breakdown Minutes',
+        'Total Downtime Minutes',
+        'Expected Qty',
+        'Difference Qty',
+        'Efficiency %',
+        'OK Qty',
+        'Rejected Qty',
+        'Slots',
+        'Locked Slots',
+        'Missed Slots'
+      ],
       ...this.reports().map((report) => [
         this.formatDate(report.reportDate),
         report.reportStatus || 'Open',
@@ -144,9 +178,26 @@ export class ProductionReportListComponent {
         report.shiftName,
         report.itemCode,
         report.customerCode,
+        report.operatorName || '',
+        this.formatNumber(report.presenceHours),
+        this.formatNumber(report.actualWorkingHours),
+        this.formatNumber(report.runningHours),
+        this.formatNumber(report.lunchBreakMinutes),
+        this.formatNumber(report.dinnerBreakMinutes),
+        this.formatNumber(report.setupMinutes),
+        this.formatNumber(report.idleMinutes),
+        this.formatNumber(report.machineBreakdownMinutes),
+        this.formatNumber(report.toolBreakdownMinutes),
+        this.formatNumber(this.totalBreakdownMinutes(report)),
+        this.formatNumber(this.totalDowntimeMinutes(report)),
+        this.formatNumber(report.expectedQuantity),
+        this.formatNumber(report.differenceQuantity),
+        this.formatNumber(report.efficiencyPercent),
         String(report.totalOkQuantity),
         String(report.totalRejectedQuantity),
-        String(report.entries.length)
+        String(report.entries.length),
+        String(this.lockedSlotCount(report)),
+        String(this.missedSlotCount(report))
       ])
     ];
 
@@ -169,6 +220,46 @@ export class ProductionReportListComponent {
 
   slotSummary(report: ProductionReport): string {
     return report.entries.map((entry) => `${this.formatTime(entry.fromTime)}-${this.formatTime(entry.toTime)}`).join(', ');
+  }
+
+  formatHours(value: number | null | undefined): string {
+    return `${this.formatNumber(value)} hrs`;
+  }
+
+  formatMinutes(value: number | null | undefined): string {
+    return `${this.formatNumber(value)} min`;
+  }
+
+  formatNumber(value: number | null | undefined): string {
+    return Number(value ?? 0).toFixed(2);
+  }
+
+  totalBreakdownMinutes(report: ProductionReport): number {
+    return Number(report.idleMinutes ?? 0) +
+      Number(report.machineBreakdownMinutes ?? 0) +
+      Number(report.toolBreakdownMinutes ?? 0);
+  }
+
+  totalDowntimeMinutes(report: ProductionReport): number {
+    return Number(report.lunchBreakMinutes ?? 0) +
+      Number(report.dinnerBreakMinutes ?? 0) +
+      Number(report.setupMinutes ?? 0) +
+      this.totalBreakdownMinutes(report);
+  }
+
+  lockedSlotCount(report: ProductionReport): number {
+    return report.entries.filter((entry) => String(entry.entryStatus ?? '').toLowerCase() === 'locked' || !!entry.lockedAt).length;
+  }
+
+  missedSlotCount(report: ProductionReport): number {
+    return report.entries.filter((entry) => String(entry.entryStatus ?? '').toLowerCase() === 'missed').length;
+  }
+
+  efficiencyClass(report: ProductionReport): string {
+    const efficiency = Number(report.efficiencyPercent ?? 0);
+    if (efficiency >= 90) return 'metric-good';
+    if (efficiency >= 70) return 'metric-warn';
+    return 'metric-danger';
   }
 
   statusClass(status: string | null | undefined): string {

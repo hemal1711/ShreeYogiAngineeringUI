@@ -19,19 +19,23 @@
     <h2><i class="bi bi-funnel"></i> Filters</h2>
 
     <div class="report-filters__grid">
-      <select class="form-select" [(ngModel)]="filter.customerCorrelationId" (change)="onFilter()">
-        <option value="">All Customers</option>
-        @for (customer of customers(); track customer.correlationId) {
-          <option [value]="customer.correlationId">{{ customer.customerName }}</option>
-        }
-      </select>
+      @if (canReadCustomers) {
+        <select class="form-select" [(ngModel)]="filter.customerCorrelationId" (change)="onFilter()">
+          <option value="">All Customers</option>
+          @for (customer of customers(); track customer.correlationId) {
+            <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+          }
+        </select>
+      }
 
-      <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()">
-        <option value="">All Items</option>
-        @for (item of items(); track item.correlationId) {
-          <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }}</option>
-        }
-      </select>
+      @if (canReadManufacturingItems) {
+        <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()">
+          <option value="">All Items</option>
+          @for (item of items(); track item.correlationId) {
+            <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }}</option>
+          }
+        </select>
+      }
 
       <select class="form-select" [(ngModel)]="filter.machineType" (change)="onFilter()">
         <option value="">All Machines</option>
@@ -90,8 +94,32 @@
 
           <div class="mobile-data-card__grid mobile-data-card__grid--two">
             <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Presence</span>
+              <span><strong>{{ formatHours(report.presenceHours) }}</strong></span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Working</span>
+              <span>{{ formatHours(report.actualWorkingHours) }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Running</span>
+              <span>{{ formatHours(report.runningHours) }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Breaks</span>
+              <span>Lunch {{ formatMinutes(report.lunchBreakMinutes) }} | Dinner {{ formatMinutes(report.dinnerBreakMinutes) }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Breakdown</span>
+              <span>{{ formatMinutes(totalBreakdownMinutes(report)) }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Downtime</span>
+              <span>{{ formatMinutes(totalDowntimeMinutes(report)) }}</span>
+            </div>
+            <div class="mobile-data-field">
               <span class="mobile-data-field__label">Slots</span>
-              <span>{{ report.entries.length }}</span>
+              <span>{{ report.entries.length }} | Locked {{ lockedSlotCount(report) }} | Missed {{ missedSlotCount(report) }}</span>
             </div>
             <div class="mobile-data-field">
               <span class="mobile-data-field__label">OK Qty</span>
@@ -104,6 +132,14 @@
             <div class="mobile-data-field">
               <span class="mobile-data-field__label">Time Slots</span>
               <span>{{ slotSummary(report) || '-' }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Expected / Difference</span>
+              <span>{{ formatNumber(report.expectedQuantity) }} / {{ formatNumber(report.differenceQuantity) }}</span>
+            </div>
+            <div class="mobile-data-field">
+              <span class="mobile-data-field__label">Efficiency</span>
+              <span [ngClass]="efficiencyClass(report)"><strong>{{ formatNumber(report.efficiencyPercent) }}%</strong></span>
             </div>
           </div>
 
@@ -137,9 +173,10 @@
             <th>Shift</th>
             <th>Item</th>
             <th>Customer</th>
-            <th>OK Qty</th>
-            <th>Rejected Qty</th>
-            <th>Slots</th>
+            <th>Time Summary</th>
+            <th>Breaks & Downtime</th>
+            <th>Production</th>
+            <th>Slot Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -158,9 +195,39 @@
                 <div class="muted">{{ report.itemName }}</div>
               </td>
               <td>{{ report.customerCode }}</td>
-              <td><strong>{{ report.totalOkQuantity }}</strong></td>
-              <td>{{ report.totalRejectedQuantity }}</td>
-              <td class="slot-cell">{{ slotSummary(report) || '-' }}</td>
+              <td>
+                <div class="metric-stack">
+                  <span><strong>Presence:</strong> {{ formatHours(report.presenceHours) }}</span>
+                  <span><strong>Working:</strong> {{ formatHours(report.actualWorkingHours) }}</span>
+                  <span><strong>Running:</strong> {{ formatHours(report.runningHours) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="metric-stack">
+                  <span><strong>Lunch:</strong> {{ formatMinutes(report.lunchBreakMinutes) }}</span>
+                  <span><strong>Dinner:</strong> {{ formatMinutes(report.dinnerBreakMinutes) }}</span>
+                  <span><strong>Setup:</strong> {{ formatMinutes(report.setupMinutes) }}</span>
+                  <span><strong>Breakdown:</strong> {{ formatMinutes(totalBreakdownMinutes(report)) }}</span>
+                  <span><strong>Total downtime:</strong> {{ formatMinutes(totalDowntimeMinutes(report)) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="metric-stack">
+                  <span><strong>OK:</strong> {{ report.totalOkQuantity }}</span>
+                  <span><strong>Rejected:</strong> {{ report.totalRejectedQuantity }}</span>
+                  <span><strong>Expected:</strong> {{ formatNumber(report.expectedQuantity) }}</span>
+                  <span><strong>Difference:</strong> {{ formatNumber(report.differenceQuantity) }}</span>
+                  <span [ngClass]="efficiencyClass(report)"><strong>Efficiency:</strong> {{ formatNumber(report.efficiencyPercent) }}%</span>
+                </div>
+              </td>
+              <td class="slot-cell">
+                <div class="metric-stack">
+                  <span><strong>Total:</strong> {{ report.entries.length }}</span>
+                  <span><strong>Locked:</strong> {{ lockedSlotCount(report) }}</span>
+                  <span><strong>Missed:</strong> {{ missedSlotCount(report) }}</span>
+                  <span>{{ slotSummary(report) || '-' }}</span>
+                </div>
+              </td>
               <td>
                 <div class="action-buttons">
                   @if (canUpdate) {

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, comp
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import {
   MachineName,
   MachineType,
@@ -15,18 +15,36 @@ import {
   User
 } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
 
 interface ProductionSummary {
+  presenceHours: number;
+  actualWorkingHours: number;
   totalProduction: number;
+  okQuantity: number;
+  rejectedQuantity: number;
   expectedQuantity: number;
   differenceQuantity: number;
+  shortageQuantity: number;
+  extraQuantity: number;
+  achievementStatus: string;
   rejectPercent: number;
   efficiencyPercent: number;
   runningHours: number;
+  lunchBreakMinutes: number;
+  dinnerBreakMinutes: number;
+  setupMinutes: number;
+  idleMinutes: number;
+  machineBreakdownMinutes: number;
+  toolBreakdownMinutes: number;
+  totalBreakdownMinutes: number;
+  totalDowntimeMinutes: number;
   timeStatus: string;
+  productionVariancePercent;
 }
 
 @Component({
@@ -42,6 +60,8 @@ export class ProductionReportFormComponent {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(AccessControlService);
+  private readonly authService = inject(AuthService);
+  private readonly permissionService = inject(PermissionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialogService = inject(ConfirmationDialogService);
@@ -60,6 +80,12 @@ export class ProductionReportFormComponent {
   readonly pageTitle = signal('Add Production Report');
   readonly reportStatus = signal('Open');
   readonly formVersion = signal(0);
+  readonly canManageHeader = this.permissionService.has('productionreport.manage');
+  readonly canCreateReport = this.permissionService.has('productionreport.create');
+  readonly canUpdateReport = this.permissionService.has('productionreport.update');
+  readonly canReopenMissedEntries = this.permissionService.has('productionreport.missed.reopen');
+  readonly canReadUsers = this.permissionService.has('user.read');
+  readonly canReadManufacturingItems = this.permissionService.has('manufacturingitem.read');
 
   readonly shifts = ['Day Shift', 'Night Shift'];
   readonly rejectReasons = ['Size Issue', 'Surface Issue', 'Tool Break', 'Machine Vibration', 'Other'];
@@ -138,6 +164,11 @@ export class ProductionReportFormComponent {
   }
 
   onSubmit(): void {
+    if (!this.canEditHeader()) {
+      this.toastService.warning('Only admin can save production report header.', 'Admin required');
+      return;
+    }
+
     if (!this.validateHeader(true) || this.form.invalid) {
       this.form.markAllAsTouched();
       this.toastService.warning('Please complete required production report fields.', 'Report needs attention');
@@ -211,18 +242,27 @@ export class ProductionReportFormComponent {
   }
 
   unlockEntry(index: number): void {
+    if (!this.canReopenMissedEntries) {
+      this.toastService.warning('Only admin can reopen locked or missed entries.', 'Admin required');
+      return;
+    }
+
     const reportId = this.correlationId();
     const entryId = this.entriesArray.at(index)?.getRawValue()?.correlationId;
     if (!reportId || !entryId) return;
 
     this.unlockingEntryId.set(entryId);
 
-    this.service.unlockProductionReportEntry(reportId, entryId)
+    const operation = this.isMissedEntry(index)
+      ? this.service.reopenMissedProductionReportEntry(reportId, entryId)
+      : this.service.unlockProductionReportEntry(reportId, entryId);
+
+    operation
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           this.unlockingEntryId.set(null);
-          this.toastService.success('Hourly entry unlocked.', 'Unlocked');
+          this.toastService.success(this.isMissedEntry(index) ? 'Missed hourly entry reopened.' : 'Hourly entry unlocked.', 'Unlocked');
 
           if (response.data) {
             this.applyReport(response.data as ProductionReport);
@@ -287,6 +327,7 @@ export class ProductionReportFormComponent {
 
   entryDisplayStatus(index: number): string {
     const value = this.entriesArray.at(index).getRawValue();
+    if (String(value.entryStatus ?? '').toLowerCase() === 'missed') return 'Missed';
     if (this.isEntryLocked(index)) return 'Locked';
     return value.correlationId ? 'Unlocked' : 'Pending';
   }
@@ -294,13 +335,23 @@ export class ProductionReportFormComponent {
   statusClass(status: string | null | undefined): string {
     const value = (status || 'Open').toLowerCase();
     if (value === 'completed' || value === 'unlocked') return 'badge-success';
-    if (value === 'cancelled') return 'badge-danger';
+    if (value === 'cancelled' || value === 'missed') return 'badge-danger';
     return 'badge-info';
+  }
+
+  metricTone(value: number, goodAt: number, warnAt: number): string {
+    if (value >= goodAt) return 'good';
+    if (value >= warnAt) return 'warn';
+    return 'danger';
   }
 
   userDisplayName(user: User): string {
     const name = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
     return name || user.userName;
+  }
+
+  canEditHeader(): boolean {
+    return this.canManageHeader || (!this.correlationId() && this.canCreateReport) || (!!this.correlationId() && this.canUpdateReport);
   }
 
   private createEntryGroup(entry?: Partial<ProductionReportEntry>): FormGroup {
@@ -324,18 +375,21 @@ export class ProductionReportFormComponent {
   private loadPage(id: string | null): void {
     this.isLoading.set(true);
     forkJoin({
-      items: this.service.getManufacturingItems(1, 200),
+      items: this.canReadManufacturingItems ? this.service.getManufacturingItems(1, 200) : this.service.getProductionReportItemLookups(),
       machineTypes: this.service.getMachineTypes(),
       machineNames: this.service.getMachineNames(),
-      users: this.service.getUsers(1, 200)
+      users: this.canReadUsers ? this.service.getUsers(1, 200) : of(null)
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ items, machineTypes, machineNames, users }) => {
-          this.items.set((items.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? []);
+          this.items.set(this.resolveItems(items?.data));
           this.machineTypeOptions.set((machineTypes.data as MachineType[] | undefined) ?? []);
           this.machineNameOptions.set((machineNames.data as MachineName[] | undefined) ?? []);
-          this.users.set((users.data as PagedResponse<User> | undefined)?.items ?? []);
+          this.users.set(this.canReadUsers
+            ? (users?.data as PagedResponse<User> | undefined)?.items ?? []
+            : this.currentUserAsOperatorList());
+          this.applyHeaderControlState();
           id ? this.loadReport(id) : this.isLoading.set(false);
         },
         error: (error) => {
@@ -389,6 +443,9 @@ export class ProductionReportFormComponent {
       toolBreakdownMinutes: report.toolBreakdownMinutes ?? null,
       remarks: report.remarks ?? ''
     });
+
+    this.ensureCurrentReportLookups(report);
+    this.applyHeaderControlState();
 
     this.entriesArray.clear();
     report.entries.forEach((entry) => this.entriesArray.push(this.createEntryGroup(this.normalizeEntry(entry))));
@@ -511,6 +568,101 @@ export class ProductionReportFormComponent {
     return this.reportStatus() === 'Completed' || !!entry?.lockedAt;
   }
 
+  private isMissedEntry(index: number): boolean {
+    return String(this.entriesArray.at(index)?.getRawValue()?.entryStatus ?? '').toLowerCase() === 'missed';
+  }
+
+  private applyHeaderControlState(): void {
+    const headerControls = [
+      'manufacturingItemCorrelationId',
+      'machineType',
+      'machineName',
+      'shiftName',
+      'reportDate',
+      'jobName',
+      'operatorUserCorrelationId',
+      'operatorInTime',
+      'operatorOutTime',
+      'lunchOutTime',
+      'lunchInTime',
+      'dinnerOutTime',
+      'dinnerInTime',
+      'setupStartTime',
+      'setupEndTime',
+      'cycleTimeMinutes',
+      'loadUnloadTimeMinutes',
+      'partsPerCycle',
+      'idleMinutes',
+      'idleReason',
+      'machineBreakdownMinutes',
+      'toolBreakdownMinutes',
+      'remarks'
+    ];
+
+    headerControls.forEach((name) => {
+      const control = this.form.get(name);
+      if (!control) return;
+      this.canEditHeader()
+        ? control.enable({ emitEvent: false })
+        : control.disable({ emitEvent: false });
+    });
+
+    this.form.controls.perHourQuantity.disable({ emitEvent: false });
+  }
+
+  private ensureCurrentReportLookups(report: ProductionReport): void {
+    if (!this.items().some((item) => item.correlationId === report.manufacturingItemCorrelationId)) {
+      this.items.set([
+        ...this.items(),
+        {
+          correlationId: report.manufacturingItemCorrelationId,
+          itemCode: report.itemCode,
+          itemName: report.itemName,
+          customerCorrelationId: report.customerCorrelationId,
+          customerName: report.customerName,
+          customerCode: report.customerCode,
+          lowStockThreshold: 0,
+          isActive: true,
+          createdOn: report.createdOn
+        }
+      ]);
+    }
+
+    if (report.operatorUserCorrelationId && !this.users().some((user) => user.correlationId === report.operatorUserCorrelationId)) {
+      this.users.set([
+        ...this.users(),
+        {
+          correlationId: report.operatorUserCorrelationId,
+          userName: report.operatorName || 'operator',
+          firstName: report.operatorName || 'Operator',
+          isActive: true,
+          createdOn: report.createdOn
+        }
+      ]);
+    }
+  }
+
+  private currentUserAsOperatorList(): User[] {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    return [{
+      correlationId: user.userCorrelationId,
+      userName: user.userName,
+      email: user.email,
+      firstName: user.fullName || user.userName,
+      phoneNumber: user.phoneNumber,
+      isActive: true,
+      createdOn: new Date().toISOString()
+    }];
+  }
+
+  private resolveItems(data: unknown): ManufacturingItem[] {
+    if (!data) return [];
+    if (Array.isArray(data)) return data as ManufacturingItem[];
+    return (data as PagedResponse<ManufacturingItem>).items ?? [];
+  }
+
   private normalizeEntry(entry: ProductionReportEntry): ProductionReportEntry {
     if (!entry.lockedAt && String(entry.entryStatus ?? '').toLowerCase() === 'locked') {
       return { ...entry, entryStatus: 'Submitted' };
@@ -520,40 +672,84 @@ export class ProductionReportFormComponent {
 
   private calculateSummary(): ProductionSummary {
     const presenceMinutes = this.productionPresenceMinutes();
-    const downtime = this.minutesBetween('lunchOutTime', 'lunchInTime') +
-      this.minutesBetween('dinnerOutTime', 'dinnerInTime') +
-      this.minutesBetween('setupStartTime', 'setupEndTime') +
-      this.numberValue('idleMinutes') +
-      this.numberValue('machineBreakdownMinutes') +
-      this.numberValue('toolBreakdownMinutes');
-    const runningMinutes = Math.max(presenceMinutes - downtime, 0);
-    const okQty = this.entriesArray.controls.reduce((sum, control) => sum + Number(control.getRawValue().okQuantity || 0), 0);
-    const rejectedQty = this.entriesArray.controls.reduce((sum, control) => sum + Number(control.getRawValue().rejectedQuantity || 0), 0);
+
+    const lunchBreakMinutes = this.minutesBetween('lunchOutTime', 'lunchInTime');
+    const dinnerBreakMinutes = this.minutesBetween('dinnerOutTime', 'dinnerInTime');
+    const setupMinutes = this.minutesBetween('setupStartTime', 'setupEndTime');
+
+    const idleMinutes = this.numberValue('idleMinutes');
+    const machineBreakdownMinutes = this.numberValue('machineBreakdownMinutes');
+    const toolBreakdownMinutes = this.numberValue('toolBreakdownMinutes');
+
+    const totalBreakdownMinutes = idleMinutes + machineBreakdownMinutes + toolBreakdownMinutes;
+    const totalDowntimeMinutes = lunchBreakMinutes + dinnerBreakMinutes + setupMinutes + totalBreakdownMinutes;
+
+    const actualWorkingMinutes = Math.max(presenceMinutes - lunchBreakMinutes - dinnerBreakMinutes, 0);
+    const runningMinutes = Math.max(presenceMinutes - totalDowntimeMinutes, 0);
+
+    const okQty = this.entriesArray.controls.reduce(
+      (sum, control) => sum + Number(control.getRawValue().okQuantity || 0),
+      0
+    );
+
+    const rejectedQty = this.entriesArray.controls.reduce(
+      (sum, control) => sum + Number(control.getRawValue().rejectedQuantity || 0),
+      0
+    );
+
     const totalProduction = okQty + rejectedQty;
     const expectedQuantity = this.perHourQuantity() * (runningMinutes / 60);
 
+    const differenceQuantity = totalProduction - expectedQuantity;
+    const shortageQuantity = Math.max(expectedQuantity - totalProduction, 0);
+    const extraQuantity = Math.max(totalProduction - expectedQuantity, 0);
+
+    const productionVariancePercent = expectedQuantity > 0
+      ? totalProduction / expectedQuantity
+      : 0;
     return {
+      presenceHours: presenceMinutes / 60,
+      actualWorkingHours: actualWorkingMinutes / 60,
       totalProduction,
+      okQuantity: okQty,
+      rejectedQuantity: rejectedQty,
       expectedQuantity,
-      differenceQuantity: totalProduction - expectedQuantity,
-      rejectPercent: totalProduction > 0 ? rejectedQty / totalProduction * 100 : 0,
-      efficiencyPercent: expectedQuantity > 0 ? totalProduction / expectedQuantity * 100 : 0,
+      differenceQuantity,
+      shortageQuantity,
+      extraQuantity,
+      achievementStatus: totalProduction >= expectedQuantity ? 'Achieved' : 'Shortage',
+      rejectPercent: totalProduction > 0 ? (rejectedQty / totalProduction) * 100 : 0,
+      efficiencyPercent: expectedQuantity > 0 ? (totalProduction / expectedQuantity) * 100 : 0,
       runningHours: runningMinutes / 60,
-      timeStatus: this.validateHeader(false) ? 'Valid' : 'Check Time'
+      lunchBreakMinutes,
+      dinnerBreakMinutes,
+      setupMinutes,
+      idleMinutes,
+      machineBreakdownMinutes,
+      toolBreakdownMinutes,
+      totalBreakdownMinutes,
+      totalDowntimeMinutes,
+      timeStatus: this.validateHeader(false) ? 'Valid' : 'Check Time',
+      productionVariancePercent
     };
   }
 
   private validateHeader(showMessage: boolean): boolean {
     const inTime = this.toMinutes(this.form.controls.operatorInTime.value);
     const outTime = this.toMinutes(this.form.controls.operatorOutTime.value);
+
     if (inTime === null) {
       if (showMessage) this.toastService.warning('Operator In Time is required.', 'Time required');
       return false;
     }
-    if (outTime !== null && outTime <= inTime) {
+
+    const isNightShift = this.form.controls.shiftName.value === 'Night Shift';
+
+    if (outTime !== null && !isNightShift && outTime <= inTime) {
       if (showMessage) this.toastService.warning('Operator Out Time must be greater than In Time.', 'Invalid time');
       return false;
     }
+
     return this.validatePair('lunchOutTime', 'lunchInTime', 'Lunch', showMessage) &&
       this.validatePair('dinnerOutTime', 'dinnerInTime', 'Dinner', showMessage) &&
       this.validatePair('setupStartTime', 'setupEndTime', 'Setup', showMessage);
@@ -562,14 +758,21 @@ export class ProductionReportFormComponent {
   private validatePair(startName: string, endName: string, label: string, showMessage: boolean): boolean {
     const start = this.toMinutes(this.form.get(startName)?.value);
     const end = this.toMinutes(this.form.get(endName)?.value);
+
     if ((start !== null && end === null) || (start === null && end !== null)) {
       if (showMessage) this.toastService.warning(`${label} start and end both are required.`, 'Invalid time');
       return false;
     }
-    if (start !== null && end !== null && end <= start) {
-      if (showMessage) this.toastService.warning(`${label} end must be greater than start.`, 'Invalid time');
-      return false;
+
+    if (start !== null && end !== null) {
+      const duration = this.minutesBetween(startName, endName);
+
+      if (duration <= 0 || duration > 12 * 60) {
+        if (showMessage) this.toastService.warning(`${label} time is not valid.`, 'Invalid time');
+        return false;
+      }
     }
+
     return true;
   }
 
@@ -589,7 +792,16 @@ export class ProductionReportFormComponent {
   private minutesBetween(startName: string, endName: string): number {
     const start = this.toMinutes(this.form.get(startName)?.value);
     const end = this.toMinutes(this.form.get(endName)?.value);
-    return start !== null && end !== null && end > start ? end - start : 0;
+
+    if (start === null || end === null) return 0;
+
+    let diff = end - start;
+
+    if (diff <= 0) {
+      diff += 24 * 60;
+    }
+
+    return diff;
   }
 
   private productionPresenceMinutes(): number {
@@ -597,7 +809,16 @@ export class ProductionReportFormComponent {
     if (inTime === null) return 0;
 
     const outTime = this.toMinutes(this.form.controls.operatorOutTime.value);
-    if (outTime !== null) return outTime > inTime ? outTime - inTime : 0;
+
+    if (outTime !== null) {
+      let diff = outTime - inTime;
+
+      if (diff <= 0) {
+        diff += 24 * 60;
+      }
+
+      return diff;
+    }
 
     if (this.reportStatus() === 'Completed') return 0;
 
@@ -606,7 +827,14 @@ export class ProductionReportFormComponent {
 
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    return currentMinutes > inTime ? currentMinutes - inTime : 0;
+
+    let diff = currentMinutes - inTime;
+
+    if (diff < 0 && this.form.controls.shiftName.value === 'Night Shift') {
+      diff += 24 * 60;
+    }
+
+    return diff > 0 ? diff : 0;
   }
 
   private numberValue(name: string): number {

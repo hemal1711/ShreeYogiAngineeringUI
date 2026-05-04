@@ -52,9 +52,11 @@ export const API_ENDPOINTS = {
   },
   productionReports: {
     list: '/productionreports',
+    itemLookups: '/productionreports/lookups/items',
     byId: (correlationId: string) => `/productionreports/${correlationId}`,
     entries: (correlationId: string) => `/productionreports/${correlationId}/entries`,
     unlockEntry: (correlationId: string, entryCorrelationId: string) => `/productionreports/${correlationId}/entries/${entryCorrelationId}/unlock`,
+    reopenMissedEntry: (correlationId: string, entryCorrelationId: string) => `/productionreports/${correlationId}/entries/${entryCorrelationId}/reopen-missed`,
     complete: (correlationId: string) => `/productionreports/${correlationId}/complete`
   },
   machineMasters: {
