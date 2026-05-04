@@ -452,6 +452,7 @@ export class ProductionReportFormComponent {
     this.syncPerHourQuantity();
     this.form.markAsPristine();
     this.refreshUi();
+    this.form.controls.operatorInTime.disable({ emitEvent: false });
   }
 
   private buildHeaderRequest(): ProductionReportRequest {
