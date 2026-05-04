@@ -4,6 +4,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartOptions, registerables } from 'chart.js';
 import { DashboardSummary } from '../../core/models/access-control.model';
 import { AccessControlService } from '../../core/services/access-control.service';
+import { AuthService } from '../../core/services/auth.service';
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb.component';
 
 Chart.register(...registerables);
@@ -26,12 +27,24 @@ interface MetricCard {
 })
 export class DashboardComponent {
   private readonly accessControlService = inject(AccessControlService);
+  private readonly authService = inject(AuthService);
 
   readonly summary = signal<DashboardSummary | null>(null);
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
+  readonly currentUser = this.authService.currentUser;
+  readonly isWorkforceDashboard = computed(() => {
+    const user = this.currentUser();
+    if (!user || user.isSystemRole) return false;
+    return user.roles.some((role) => ['operator', 'staff'].includes(role.trim().toLowerCase()));
+  });
 
   constructor() {
+    if (this.isWorkforceDashboard()) {
+      this.isLoading.set(false);
+      return;
+    }
+
     this.reload();
   }
 
@@ -223,6 +236,13 @@ export class DashboardComponent {
   };
 
   reload(): void {
+    if (this.isWorkforceDashboard()) {
+      this.summary.set(null);
+      this.loadError.set(null);
+      this.isLoading.set(false);
+      return;
+    }
+
     this.isLoading.set(true);
     this.loadError.set(null);
 

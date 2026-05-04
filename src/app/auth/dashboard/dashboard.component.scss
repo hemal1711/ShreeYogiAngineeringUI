@@ -40,6 +40,42 @@
   font-size: 1rem;
 }
 
+.workforce-dashboard {
+  min-height: min(32rem, calc(100vh - 11rem));
+  display: grid;
+  align-items: center;
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid #dce3ee;
+  border-radius: var(--sp-radius);
+  background: #ffffff;
+  box-shadow: var(--sp-shadow);
+}
+
+.workforce-dashboard span {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.workforce-dashboard h1 {
+  max-width: 44rem;
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 850;
+  line-height: 1.05;
+}
+
+.workforce-dashboard p {
+  margin: 1rem 0 0;
+  color: #475569;
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  font-weight: 700;
+}
+
 .dashboard-page__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));

@@ -158,7 +158,14 @@ export class ProductionReportFormComponent {
   addManualEntry(): void {
     const last = this.entriesArray.at(this.entriesArray.length - 1)?.getRawValue();
     const fromTime = last?.toTime || this.form.controls.operatorInTime.value || '';
-    this.entriesArray.push(this.createEntryGroup({ fromTime, toTime: this.addOneHour(fromTime), okQuantity: 0, rejectedQuantity: 0 }));
+    const toTime = this.addOneHour(fromTime);
+
+    if (!this.isSlotInsideVisibleOperatorTime(fromTime, toTime)) {
+      this.toastService.warning('This hourly slot is outside the operator in/out time. Save correct operator time first.', 'Invalid slot');
+      return;
+    }
+
+    this.entriesArray.push(this.createEntryGroup({ fromTime, toTime, okQuantity: 0, rejectedQuantity: 0 }));
     this.form.markAsDirty();
     this.formVersion.update((value) => value + 1);
   }
@@ -208,6 +215,11 @@ export class ProductionReportFormComponent {
     const group = this.entriesArray.at(index);
     if (!group) return;
 
+    if (this.hasUnsavedHeaderChanges()) {
+      this.toastService.warning('Save the report header before saving hourly entries.', 'Save report first');
+      return;
+    }
+
     if (group.invalid) {
       group.markAllAsTouched();
       this.toastService.warning('Complete the hourly entry before saving.', 'Entry needs attention');
@@ -215,6 +227,11 @@ export class ProductionReportFormComponent {
     }
 
     const beforeSaveValue = group.getRawValue();
+    if (!this.isSlotInsideVisibleOperatorTime(beforeSaveValue.fromTime, beforeSaveValue.toTime)) {
+      this.toastService.warning('Hourly slot must be inside operator in/out time.', 'Invalid slot');
+      return;
+    }
+
     const request = this.entryRequest(group);
 
     this.savingEntryIndex.set(index);
@@ -242,8 +259,8 @@ export class ProductionReportFormComponent {
   }
 
   unlockEntry(index: number): void {
-    if (!this.canReopenMissedEntries) {
-      this.toastService.warning('Only admin can reopen locked or missed entries.', 'Admin required');
+    if (this.isMissedEntry(index) && !this.canReopenMissedEntries) {
+      this.toastService.warning('Only admin can reopen missed entries.', 'Admin required');
       return;
     }
 
@@ -300,6 +317,7 @@ export class ProductionReportFormComponent {
         error: (error) => {
           this.isCompleting.set(false);
           this.toastService.error(error?.error?.message || 'We could not complete this report.', 'Complete failed');
+          this.loadReport(reportId);
         }
       });
   }
@@ -352,6 +370,10 @@ export class ProductionReportFormComponent {
 
   canEditHeader(): boolean {
     return this.canManageHeader || (!this.correlationId() && this.canCreateReport) || (!!this.correlationId() && this.canUpdateReport);
+  }
+
+  canEditCoreHeader(): boolean {
+    return this.canManageHeader || (!this.hasStartedEntries() && this.canEditHeader());
   }
 
   private createEntryGroup(entry?: Partial<ProductionReportEntry>): FormGroup {
@@ -445,14 +467,13 @@ export class ProductionReportFormComponent {
     });
 
     this.ensureCurrentReportLookups(report);
-    this.applyHeaderControlState();
 
     this.entriesArray.clear();
     report.entries.forEach((entry) => this.entriesArray.push(this.createEntryGroup(this.normalizeEntry(entry))));
+    this.applyHeaderControlState();
     this.syncPerHourQuantity();
     this.form.markAsPristine();
     this.refreshUi();
-    this.form.controls.operatorInTime.disable({ emitEvent: false });
   }
 
   private buildHeaderRequest(): ProductionReportRequest {
@@ -573,8 +594,8 @@ export class ProductionReportFormComponent {
     return String(this.entriesArray.at(index)?.getRawValue()?.entryStatus ?? '').toLowerCase() === 'missed';
   }
 
-  private applyHeaderControlState(): void {
-    const headerControls = [
+  private hasUnsavedHeaderChanges(): boolean {
+    return [
       'manufacturingItemCorrelationId',
       'machineType',
       'machineName',
@@ -598,9 +619,65 @@ export class ProductionReportFormComponent {
       'machineBreakdownMinutes',
       'toolBreakdownMinutes',
       'remarks'
+    ].some((name) => this.form.get(name)?.dirty);
+  }
+
+  private isSlotInsideVisibleOperatorTime(fromTime: string | null | undefined, toTime: string | null | undefined): boolean {
+    const operatorIn = this.toMinutes(this.form.controls.operatorInTime.value);
+    const operatorOut = this.toMinutes(this.form.controls.operatorOutTime.value);
+    const from = this.toMinutes(fromTime);
+    const to = this.toMinutes(toTime);
+
+    if (operatorIn === null || from === null || to === null) return false;
+    if (operatorOut === null) return this.offsetMinutes(operatorIn, from) >= 0;
+
+    const fromOffset = this.offsetMinutes(operatorIn, from);
+    let toOffset = this.offsetMinutes(operatorIn, to);
+    if (toOffset <= fromOffset) toOffset += 24 * 60;
+
+    const outOffset = this.offsetMinutes(operatorIn, operatorOut);
+    return fromOffset >= 0 && toOffset <= outOffset;
+  }
+
+  private applyHeaderControlState(): void {
+    const coreHeaderControls = [
+      'manufacturingItemCorrelationId',
+      'machineType',
+      'machineName',
+      'shiftName',
+      'reportDate',
+      'operatorUserCorrelationId',
+      'operatorInTime'
     ];
 
-    headerControls.forEach((name) => {
+    const editableHeaderControls = [
+      'jobName',
+      'operatorOutTime',
+      'lunchOutTime',
+      'lunchInTime',
+      'dinnerOutTime',
+      'dinnerInTime',
+      'setupStartTime',
+      'setupEndTime',
+      'cycleTimeMinutes',
+      'loadUnloadTimeMinutes',
+      'partsPerCycle',
+      'idleMinutes',
+      'idleReason',
+      'machineBreakdownMinutes',
+      'toolBreakdownMinutes',
+      'remarks'
+    ];
+
+    coreHeaderControls.forEach((name) => {
+      const control = this.form.get(name);
+      if (!control) return;
+      this.canEditCoreHeader()
+        ? control.enable({ emitEvent: false })
+        : control.disable({ emitEvent: false });
+    });
+
+    editableHeaderControls.forEach((name) => {
       const control = this.form.get(name);
       if (!control) return;
       this.canEditHeader()
@@ -609,6 +686,10 @@ export class ProductionReportFormComponent {
     });
 
     this.form.controls.perHourQuantity.disable({ emitEvent: false });
+  }
+
+  private hasStartedEntries(): boolean {
+    return this.entriesArray.controls.some((control) => !!control.getRawValue().correlationId);
   }
 
   private ensureCurrentReportLookups(report: ProductionReport): void {
@@ -847,6 +928,11 @@ export class ProductionReportFormComponent {
     if (!time) return null;
     const parts = time.split(':').map(Number);
     return parts.length >= 2 ? parts[0] * 60 + parts[1] : null;
+  }
+
+  private offsetMinutes(origin: number, value: number): number {
+    const diff = value - origin;
+    return diff >= 0 ? diff : diff + 24 * 60;
   }
 
   private addOneHour(time: string | null | undefined): string {

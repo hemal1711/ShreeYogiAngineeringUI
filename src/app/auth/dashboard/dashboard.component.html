@@ -1,23 +1,32 @@
 <div class="dashboard-page">
   <app-breadcrumb></app-breadcrumb>
 
-  <section class="dashboard-page__heading">
-    <h1>Dashboard</h1>
-    <p>Shree Yogi Engineering - Stock Overview</p>
-  </section>
+  @if (isWorkforceDashboard()) {
+    <section class="workforce-dashboard">
+      <div>
+        <span>Welcome</span>
+        <h1>Welcome to Shree Yogi Engineering</h1>
+        <p>{{ currentUser()?.fullName || currentUser()?.userName || 'Team member' }}</p>
+      </div>
+    </section>
+  } @else {
+    <section class="dashboard-page__heading">
+      <h1>Dashboard</h1>
+      <p>Shree Yogi Engineering - Stock Overview</p>
+    </section>
 
-  @if (isLoading()) {
+    @if (isLoading()) {
     <section class="dashboard-page__placeholder">
       <div class="spinner-border text-primary"></div>
       <p>Loading dashboard...</p>
     </section>
-  } @else if (loadError()) {
+    } @else if (loadError()) {
     <section class="dashboard-page__placeholder dashboard-page__placeholder--error">
       <i class="bi bi-exclamation-triangle"></i>
       <p>{{ loadError() }}</p>
       <button type="button" class="btn btn-primary" (click)="reload()">Retry</button>
     </section>
-  } @else {
+    } @else {
     <section class="dashboard-page__stats">
       @for (card of metricCards(); track card.label) {
         <article class="metric-card">
@@ -71,5 +80,6 @@
         <div class="chart chart--bar"><canvas baseChart [data]="calibrationChartData()" [options]="lineChartOptions" [type]="'line'"></canvas></div>
       </article>
     </section>
+    }
   }
 </div>
