@@ -92,12 +92,22 @@
 
         <div class="mb-3">
           <label class="form-label">Operator In Time <span>*</span></label>
-          <input type="time" class="form-control" formControlName="operatorInTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="operatorInTime" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              [disabled]="isSubmitting() || !!form.controls.operatorInTime.value || reportStatus() === 'Completed'"
+              (click)="saveTimeAction('operatorInTime')">Check In</button>
+          </div>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Operator Out Time</label>
-          <input type="time" class="form-control" formControlName="operatorOutTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="operatorOutTime" />
+            <button type="button" class="btn btn-sm btn-outline-success"
+              [disabled]="isCompleting() || !correlationId() || reportStatus() === 'Completed'"
+              (click)="checkOutNow()">Check Out</button>
+          </div>
         </div>
       </div>
     </section>
@@ -112,19 +122,39 @@
       <div class="form-grid">
         <div class="mb-3">
           <label class="form-label">Lunch Out</label>
-          <input type="time" class="form-control" formControlName="lunchOutTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="lunchOutTime" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              [disabled]="isSubmitting() || !correlationId() || !!form.controls.lunchOutTime.value || reportStatus() === 'Completed'"
+              (click)="saveTimeAction('lunchOutTime')">Lunch Out</button>
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label">Lunch In</label>
-          <input type="time" class="form-control" formControlName="lunchInTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="lunchInTime" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              [disabled]="isSubmitting() || !correlationId() || !form.controls.lunchOutTime.value || !!form.controls.lunchInTime.value || reportStatus() === 'Completed'"
+              (click)="saveTimeAction('lunchInTime')">Lunch In</button>
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label">Dinner Out</label>
-          <input type="time" class="form-control" formControlName="dinnerOutTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="dinnerOutTime" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              [disabled]="isSubmitting() || !correlationId() || !!form.controls.dinnerOutTime.value || reportStatus() === 'Completed'"
+              (click)="saveTimeAction('dinnerOutTime')">Dinner Out</button>
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label">Dinner In</label>
-          <input type="time" class="form-control" formControlName="dinnerInTime" />
+          <div class="time-action">
+            <input type="time" class="form-control" formControlName="dinnerInTime" />
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              [disabled]="isSubmitting() || !correlationId() || !form.controls.dinnerOutTime.value || !!form.controls.dinnerInTime.value || reportStatus() === 'Completed'"
+              (click)="saveTimeAction('dinnerInTime')">Dinner In</button>
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label">Setup Start</label>
@@ -334,7 +364,7 @@
               <td><span class="badge" [ngClass]="statusClass(entryDisplayStatus($index))">{{ entryDisplayStatus($index)
                   }}</span></td>
               <td>
-                @if (isEntryLocked($index) && (entryDisplayStatus($index) !== 'Missed' || canReopenMissedEntries)) {
+                @if (isEntryLocked($index) && entryDisplayStatus($index) !== 'Lunch' && entryDisplayStatus($index) !== 'Dinner' && (entryDisplayStatus($index) !== 'Missed' || canReopenMissedEntries)) {
                 <button type="button" class="btn btn-sm btn-outline-primary"
                   [disabled]="reportStatus() === 'Completed' || unlockingEntryId() === entry.getRawValue().correlationId"
                   (click)="unlockEntry($index)">

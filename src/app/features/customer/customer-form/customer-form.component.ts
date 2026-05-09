@@ -36,7 +36,7 @@ private readonly fb = inject(FormBuilder);
     code: ['', [Validators.required, Validators.maxLength(50)]],
     contactPerson: ['', Validators.maxLength(150)],
     phone: ['', Validators.maxLength(20)],
-    email: ['', [Validators.email, Validators.maxLength(200)]],
+    email: ['', [Validators.required,Validators.email, Validators.maxLength(200)]],
     address: ['', Validators.maxLength(500)],
     isActive: [true]
   });

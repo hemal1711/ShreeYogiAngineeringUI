@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { Customer, PagedResponse, ToolingItem } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
+import { PhotoOptimizerService } from '../../../core/services/photo-optimizer.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
@@ -21,8 +22,9 @@ import { environment } from '../../../../environments/environment';
 export class ToolingItemFormComponent {
   
   private readonly destroyRef = inject(DestroyRef);
-private readonly fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
   private readonly service = inject(AccessControlService);
+  private readonly photoOptimizer = inject(PhotoOptimizerService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialogService = inject(ConfirmationDialogService);
@@ -57,10 +59,11 @@ private readonly fb = inject(FormBuilder);
   onCancel(): void { if (!this.form.dirty) { this.router.navigate(['/tooling-items']); return; } this.dialogService.showWarning('Unsaved Changes', 'You have unsaved changes to this item.', 'Discard these changes and leave?').then((confirmed) => { if (confirmed) this.router.navigate(['/tooling-items']); }); }
   isFieldInvalid(name: string): boolean { const f = this.form.get(name); return !!(f?.invalid && f.touched); }
   getFieldError(name: string): string | null { const f = this.form.get(name); if (!f?.errors || !f.touched) return null; if (f.errors['required']) return 'This field is required'; if (f.errors['min']) return 'Value must be zero or greater'; if (f.errors['maxlength']) return `Maximum ${f.errors['maxlength'].requiredLength} characters`; return 'Invalid value'; }
-  onPhotoSelected(event: Event): void { const input = event.target as HTMLInputElement; const file = input.files?.[0] ?? null; this.selectedPhoto.set(file); this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null); if (file) this.form.markAsDirty(); }
-  removePhoto(input: HTMLInputElement): void { input.value = ''; this.selectedPhoto.set(null); this.selectedPhotoPreviewUrl.set(null); this.currentPhotoUrl.set(null); this.form.markAsDirty(); }
+  async onPhotoSelected(event: Event): Promise<void> { const input = event.target as HTMLInputElement; const file = input.files?.[0] ?? null; if (!file) { this.setSelectedPhoto(null); return; } this.setSelectedPhoto(await this.photoOptimizer.optimize(file)); this.form.markAsDirty(); }
+  removePhoto(input: HTMLInputElement): void { input.value = ''; this.setSelectedPhoto(null); this.currentPhotoUrl.set(null); this.form.markAsDirty(); }
   getPhotoUrl(photoUrl: string | null): string { if (!photoUrl) return ''; if (/^https?:\/\//i.test(photoUrl)) return photoUrl; return `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}${photoUrl}`; }
   private loadPage(id: string | null): void { this.isLoading.set(true); this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (r) => { this.customers.set((r.data as PagedResponse<Customer> | undefined)?.items ?? []); if (id) this.loadItem(id); else this.isLoading.set(false); }, error: (error) => { this.isLoading.set(false); this.toastService.error(error?.error?.message || 'We could not load customers.', 'Customers not loaded'); } }); }
   private loadItem(id: string): void { this.service.getToolingItem(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: (r) => { const item = r.data as ToolingItem | undefined; if (item) { this.form.patchValue(item); this.currentPhotoUrl.set(item.photoUrl ?? null); } this.isLoading.set(false); }, error: (error) => { this.isLoading.set(false); this.toastService.error(error?.error?.message || 'We could not load this item.', 'Item not loaded'); } }); }
   private hasPhoto(): boolean { return !!this.selectedPhoto() || !!this.currentPhotoUrl(); }
+  private setSelectedPhoto(file: File | null): void { const previewUrl = this.selectedPhotoPreviewUrl(); if (previewUrl) URL.revokeObjectURL(previewUrl); this.selectedPhoto.set(file); this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null); }
 }

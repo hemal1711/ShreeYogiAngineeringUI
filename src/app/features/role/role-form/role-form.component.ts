@@ -30,9 +30,9 @@ interface PermissionMatrixRow {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RoleFormComponent {
-  
+
   private readonly destroyRef = inject(DestroyRef);
-private readonly formBuilder = inject(FormBuilder);
+  private readonly formBuilder = inject(FormBuilder);
   private readonly accessControlService = inject(AccessControlService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -230,9 +230,11 @@ private readonly formBuilder = inject(FormBuilder);
     [...permissions]
       .sort((first, second) => first.code.localeCompare(second.code))
       .forEach((permission) => {
-        const [modulePart, actionPart = ''] = permission.code.split('.');
-        const module = modulePart || permission.code;
-        const action = actionPart.toLowerCase() as PermissionAction;
+        const parts = permission.code.split('.');
+
+        const module = parts[0] || permission.code;
+         const actionPart = parts.length === 2 ? parts[1].toLowerCase() : '';
+        const action = actionPart as PermissionAction;
 
         if (!rows.has(module)) {
           rows.set(module, {
@@ -244,6 +246,7 @@ private readonly formBuilder = inject(FormBuilder);
         }
 
         const row = rows.get(module)!;
+
         if (this.permissionActions.includes(action)) {
           row.actions[action] = permission;
         } else {

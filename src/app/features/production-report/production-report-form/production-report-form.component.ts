@@ -44,7 +44,7 @@ interface ProductionSummary {
   totalBreakdownMinutes: number;
   totalDowntimeMinutes: number;
   timeStatus: string;
-  productionVariancePercent;
+  productionVariancePercent: number;
 }
 
 @Component({
@@ -259,6 +259,11 @@ export class ProductionReportFormComponent {
   }
 
   unlockEntry(index: number): void {
+    if (this.isBreakEntry(index)) {
+      this.toastService.warning('Break slots are managed by lunch and dinner actions.', 'Break slot locked');
+      return;
+    }
+
     if (this.isMissedEntry(index) && !this.canReopenMissedEntries) {
       this.toastService.warning('Only admin can reopen missed entries.', 'Admin required');
       return;
@@ -322,6 +327,28 @@ export class ProductionReportFormComponent {
       });
   }
 
+  saveTimeAction(controlName: 'operatorInTime' | 'lunchOutTime' | 'lunchInTime' | 'dinnerOutTime' | 'dinnerInTime'): void {
+    if (this.form.get(controlName)?.value) {
+      this.toastService.warning('This time is already recorded. Admin can correct it if needed.', 'Already recorded');
+      return;
+    }
+
+    this.form.get(controlName)?.setValue(this.currentTime());
+    this.form.get(controlName)?.markAsDirty();
+    this.onSubmit();
+  }
+
+  checkOutNow(): void {
+    if (this.form.controls.operatorOutTime.value) {
+      this.toastService.warning('Operator out time is already recorded. Admin can correct it if needed.', 'Already recorded');
+      return;
+    }
+
+    this.form.controls.operatorOutTime.setValue(this.currentTime());
+    this.form.controls.operatorOutTime.markAsDirty();
+    this.completeReport();
+  }
+
   onCancel(): void {
     if (!this.form.dirty) {
       this.router.navigate(['/production-reports']);
@@ -345,6 +372,8 @@ export class ProductionReportFormComponent {
 
   entryDisplayStatus(index: number): string {
     const value = this.entriesArray.at(index).getRawValue();
+    if (this.isLunchEntry(index)) return 'Lunch';
+    if (this.isDinnerEntry(index)) return 'Dinner';
     if (String(value.entryStatus ?? '').toLowerCase() === 'missed') return 'Missed';
     if (this.isEntryLocked(index)) return 'Locked';
     return value.correlationId ? 'Unlocked' : 'Pending';
@@ -354,6 +383,7 @@ export class ProductionReportFormComponent {
     const value = (status || 'Open').toLowerCase();
     if (value === 'completed' || value === 'unlocked') return 'badge-success';
     if (value === 'cancelled' || value === 'missed') return 'badge-danger';
+    if (value === 'lunch' || value === 'dinner') return 'badge-warning';
     return 'badge-info';
   }
 
@@ -386,7 +416,7 @@ export class ProductionReportFormComponent {
       rejectedQuantity: [{ value: entry?.rejectedQuantity ?? 0, disabled: locked }, [Validators.required, Validators.min(0)]],
       rejectReason: [{ value: entry?.rejectReason ?? '', disabled: locked }],
       remarks: [{ value: entry?.remarks ?? '', disabled: locked }, Validators.maxLength(500)],
-      entryStatus: [locked ? 'Locked' : entry?.correlationId ? 'Submitted' : 'Pending'],
+      entryStatus: [entry?.entryStatus ?? (locked ? 'Locked' : entry?.correlationId ? 'Submitted' : 'Pending')],
       submittedAt: [entry?.submittedAt ?? null],
       lockedAt: [entry?.lockedAt ?? null]
     });
@@ -583,15 +613,33 @@ export class ProductionReportFormComponent {
   }
 
   private isLockedGroup(group: FormGroup): boolean {
-    return this.reportStatus() === 'Completed' || !!group.getRawValue().lockedAt;
+    const value = group.getRawValue();
+    return this.reportStatus() === 'Completed' || !!value.lockedAt || this.isBreakEntryValue(value.entryStatus);
   }
 
   private isLockedEntry(entry?: Partial<ProductionReportEntry>): boolean {
-    return this.reportStatus() === 'Completed' || !!entry?.lockedAt;
+    return this.reportStatus() === 'Completed' || !!entry?.lockedAt || this.isBreakEntryValue(entry?.entryStatus);
   }
 
   private isMissedEntry(index: number): boolean {
     return String(this.entriesArray.at(index)?.getRawValue()?.entryStatus ?? '').toLowerCase() === 'missed';
+  }
+
+  private isLunchEntry(index: number): boolean {
+    return String(this.entriesArray.at(index)?.getRawValue()?.entryStatus ?? '').toLowerCase() === 'lunch';
+  }
+
+  private isDinnerEntry(index: number): boolean {
+    return String(this.entriesArray.at(index)?.getRawValue()?.entryStatus ?? '').toLowerCase() === 'dinner';
+  }
+
+  private isBreakEntry(index: number): boolean {
+    return this.isBreakEntryValue(this.entriesArray.at(index)?.getRawValue()?.entryStatus);
+  }
+
+  private isBreakEntryValue(status: string | null | undefined): boolean {
+    const value = String(status ?? '').toLowerCase();
+    return value === 'lunch' || value === 'dinner';
   }
 
   private hasUnsavedHeaderChanges(): boolean {
@@ -646,17 +694,11 @@ export class ProductionReportFormComponent {
       'machineName',
       'shiftName',
       'reportDate',
-      'operatorUserCorrelationId',
-      'operatorInTime'
+      'operatorUserCorrelationId'
     ];
 
     const editableHeaderControls = [
       'jobName',
-      'operatorOutTime',
-      'lunchOutTime',
-      'lunchInTime',
-      'dinnerOutTime',
-      'dinnerInTime',
       'setupStartTime',
       'setupEndTime',
       'cycleTimeMinutes',
@@ -667,6 +709,15 @@ export class ProductionReportFormComponent {
       'machineBreakdownMinutes',
       'toolBreakdownMinutes',
       'remarks'
+    ];
+
+    const actionTimeControls = [
+      'operatorInTime',
+      'operatorOutTime',
+      'lunchOutTime',
+      'lunchInTime',
+      'dinnerOutTime',
+      'dinnerInTime'
     ];
 
     coreHeaderControls.forEach((name) => {
@@ -681,6 +732,16 @@ export class ProductionReportFormComponent {
       const control = this.form.get(name);
       if (!control) return;
       this.canEditHeader()
+        ? control.enable({ emitEvent: false })
+        : control.disable({ emitEvent: false });
+    });
+
+    actionTimeControls.forEach((name) => {
+      const control = this.form.get(name);
+      if (!control) return;
+
+      const canEditActionTime = this.canManageHeader || (this.canEditHeader() && !control.value);
+      canEditActionTime
         ? control.enable({ emitEvent: false })
         : control.disable({ emitEvent: false });
     });
@@ -832,17 +893,17 @@ export class ProductionReportFormComponent {
       return false;
     }
 
-    return this.validatePair('lunchOutTime', 'lunchInTime', 'Lunch', showMessage) &&
-      this.validatePair('dinnerOutTime', 'dinnerInTime', 'Dinner', showMessage) &&
-      this.validatePair('setupStartTime', 'setupEndTime', 'Setup', showMessage);
+    return this.validateBreakPair('lunchOutTime', 'lunchInTime', 'Lunch', showMessage) &&
+      this.validateBreakPair('dinnerOutTime', 'dinnerInTime', 'Dinner', showMessage) &&
+      this.validateClosedPair('setupStartTime', 'setupEndTime', 'Setup', showMessage);
   }
 
-  private validatePair(startName: string, endName: string, label: string, showMessage: boolean): boolean {
+  private validateBreakPair(startName: string, endName: string, label: string, showMessage: boolean): boolean {
     const start = this.toMinutes(this.form.get(startName)?.value);
     const end = this.toMinutes(this.form.get(endName)?.value);
 
-    if ((start !== null && end === null) || (start === null && end !== null)) {
-      if (showMessage) this.toastService.warning(`${label} start and end both are required.`, 'Invalid time');
+    if (start === null && end !== null) {
+      if (showMessage) this.toastService.warning(`${label} Out is required before ${label} In.`, 'Invalid time');
       return false;
     }
 
@@ -856,6 +917,18 @@ export class ProductionReportFormComponent {
     }
 
     return true;
+  }
+
+  private validateClosedPair(startName: string, endName: string, label: string, showMessage: boolean): boolean {
+    const start = this.toMinutes(this.form.get(startName)?.value);
+    const end = this.toMinutes(this.form.get(endName)?.value);
+
+    if ((start !== null && end === null) || (start === null && end !== null)) {
+      if (showMessage) this.toastService.warning(`${label} start and end both are required.`, 'Invalid time');
+      return false;
+    }
+
+    return this.validateBreakPair(startName, endName, label, showMessage);
   }
 
   private syncPerHourQuantity(): void {
@@ -940,6 +1013,11 @@ export class ProductionReportFormComponent {
     if (minutes === null) return '';
     const next = Math.min(minutes + 60, 23 * 60 + 59);
     return `${String(Math.floor(next / 60)).padStart(2, '0')}:${String(next % 60).padStart(2, '0')}`;
+  }
+
+  private currentTime(): string {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
   private withSeconds(value: string | null | undefined): string | null {

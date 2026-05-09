@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://192.168.1.2:8080/api',
+  apiBaseUrl: 'https://api.shreeyogi.in/api',
   notificationsEnabled: true,
   firebase: {
     apiKey: 'AIzaSyD7pAbcRJZmf7gqOvSe27VK8mL6eIjywxQ',

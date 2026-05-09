@@ -183,6 +183,17 @@ td {
   align-items: center;
 }
 
+.time-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.time-action .btn {
+  white-space: nowrap;
+}
+
 .form-actions {
   margin-top: 0;
 }
@@ -208,5 +219,9 @@ td {
 
   .card-title .btn {
     width: 100%;
+  }
+
+  .time-action {
+    grid-template-columns: 1fr;
   }
 }

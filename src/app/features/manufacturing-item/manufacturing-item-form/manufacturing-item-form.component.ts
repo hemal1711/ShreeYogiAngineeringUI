@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { Customer, ManufacturingItem, PagedResponse } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
+import { PhotoOptimizerService } from '../../../core/services/photo-optimizer.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
@@ -19,10 +20,10 @@ import { environment } from '../../../../environments/environment';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManufacturingItemFormComponent {
-  
   private readonly destroyRef = inject(DestroyRef);
-private readonly fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
   private readonly service = inject(AccessControlService);
+  private readonly photoOptimizer = inject(PhotoOptimizerService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialogService = inject(ConfirmationDialogService);
@@ -49,17 +50,21 @@ private readonly fb = inject(FormBuilder);
     if (id) { this.correlationId.set(id); this.pageTitle.set('Edit Manufacturing Item'); }
     this.loadPage(id);
   }
-  onPhotoSelected(event: Event): void {
+  async onPhotoSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-    this.selectedPhoto.set(file);
-    this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null);
-    if (file) this.form.markAsDirty();
+    if (!file) {
+      this.setSelectedPhoto(null);
+      return;
+    }
+
+    const optimizedFile = await this.photoOptimizer.optimize(file);
+    this.setSelectedPhoto(optimizedFile);
+    this.form.markAsDirty();
   }
   removePhoto(input: HTMLInputElement): void {
     input.value = '';
-    this.selectedPhoto.set(null);
-    this.selectedPhotoPreviewUrl.set(null);
+    this.setSelectedPhoto(null);
     this.currentPhotoUrl.set(null);
     this.form.markAsDirty();
   }
@@ -109,5 +114,12 @@ private readonly fb = inject(FormBuilder);
 
   private hasPhoto(): boolean {
     return !!this.selectedPhoto() || !!this.currentPhotoUrl();
+  }
+
+  private setSelectedPhoto(file: File | null): void {
+    const previewUrl = this.selectedPhotoPreviewUrl();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    this.selectedPhoto.set(file);
+    this.selectedPhotoPreviewUrl.set(file ? URL.createObjectURL(file) : null);
   }
 }
