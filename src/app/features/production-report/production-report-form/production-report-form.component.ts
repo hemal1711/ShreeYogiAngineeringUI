@@ -1011,7 +1011,7 @@ export class ProductionReportFormComponent {
   private addOneHour(time: string | null | undefined): string {
     const minutes = this.toMinutes(time);
     if (minutes === null) return '';
-    const next = Math.min(minutes + 60, 23 * 60 + 59);
+    const next = (minutes + 60) % (24 * 60);
     return `${String(Math.floor(next / 60)).padStart(2, '0')}:${String(next % 60).padStart(2, '0')}`;
   }
 
