@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { initializeApp, getApps } from 'firebase/app';
 import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
 import { environment } from '../../../environments/environment';
@@ -11,7 +12,9 @@ import { ToastService } from '../../shared/components/toast';
 export class PushNotificationService {
   private readonly accessControlService = inject(AccessControlService);
   private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
   private initialized = false;
+  private currentToken: string | null = null;
 
   async initializeForLoggedInUser(): Promise<void> {
     if (this.initialized || !environment.notificationsEnabled) {
@@ -56,6 +59,7 @@ export class PushNotificationService {
       return;
     }
 
+    this.currentToken = token;
     this.accessControlService.registerDeviceToken({
       token,
       platform: this.getPlatform(),
@@ -68,9 +72,34 @@ export class PushNotificationService {
     });
 
     onMessage(messaging, (payload) => {
-      const title = payload.notification?.title || 'Production entry pending';
-      const body = payload.notification?.body || 'Please add pending hourly production entry.';
-      this.toastService.warning(body, title);
+      const title = payload.data?.['title'] || payload.notification?.title || 'Production entry pending';
+      const body = payload.data?.['body'] || payload.notification?.body || 'Please add pending hourly production entry.';
+      const link = payload.fcmOptions?.link || payload.data?.['link'];
+      this.toastService.warning(body, title, link ? {
+        duration: 10000,
+        action: {
+          label: 'Open',
+          callback: () => void this.openNotificationLink(link)
+        }
+      } : { duration: 10000 });
+    });
+  }
+
+  unregisterCurrentDevice(): void {
+    if (!this.currentToken) {
+      this.initialized = false;
+      return;
+    }
+
+    this.accessControlService.unregisterDeviceToken({ token: this.currentToken }).subscribe({
+      complete: () => {
+        this.currentToken = null;
+        this.initialized = false;
+      },
+      error: () => {
+        this.currentToken = null;
+        this.initialized = false;
+      }
     });
   }
 
@@ -89,6 +118,15 @@ export class PushNotificationService {
     if (/firefox|fxios/i.test(userAgent)) return 'Firefox';
     if (/safari/i.test(userAgent)) return 'Safari';
     return 'Browser';
+  }
+
+  private async openNotificationLink(link: string): Promise<void> {
+    if (/^https?:\/\//i.test(link)) {
+      window.location.assign(link);
+      return;
+    }
+
+    await this.router.navigateByUrl(link.startsWith('/') ? link : `/${link}`);
   }
 
   private async getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration> {

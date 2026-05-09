@@ -21,9 +21,11 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const notification = payload.notification || {};
   const link = payload.fcmOptions?.link || payload.data?.link || '/production-reports';
+  const title = payload.data?.title || notification.title || 'Production entry pending';
+  const body = payload.data?.body || notification.body || 'Please add pending hourly production entry.';
 
-  self.registration.showNotification(notification.title || 'Production entry pending', {
-    body: notification.body || 'Please add pending hourly production entry.',
+  self.registration.showNotification(title, {
+    body,
     icon: '/assets/icons/icon-192x192.png',
     badge: '/assets/icons/icon-96x96.png',
     data: { link }

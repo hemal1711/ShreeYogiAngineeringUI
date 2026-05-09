@@ -20,6 +20,7 @@ import {
   ManufacturingOperation,
   ManufacturingOperationFilter,
   ManufacturingOperationRequest,
+  NotificationCenterItem,
   ProductionReport,
   ProductionReportEntry,
   ProductionReportFilter,
@@ -66,6 +67,24 @@ export class AccessControlService {
 
   unregisterDeviceToken(request: UnregisterDeviceTokenRequest): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(API_ENDPOINTS.notifications.unregisterDevice, request);
+  }
+
+  getNotifications(take = 20): Observable<ApiResponse<NotificationCenterItem[]>> {
+    return this.http.get<ApiResponse<NotificationCenterItem[]>>(API_ENDPOINTS.notifications.list, {
+      params: new HttpParams().set('take', take.toString())
+    });
+  }
+
+  getUnreadNotificationCount(): Observable<ApiResponse<number>> {
+    return this.http.get<ApiResponse<number>>(API_ENDPOINTS.notifications.unreadCount);
+  }
+
+  markNotificationRead(correlationId: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(API_ENDPOINTS.notifications.markRead(correlationId), {});
+  }
+
+  markAllNotificationsRead(): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(API_ENDPOINTS.notifications.markAllRead, {});
   }
 
   getRoles(page = 1, pageSize = 10, search?: string): Observable<ApiResponse<PagedResponse<Role>>> {

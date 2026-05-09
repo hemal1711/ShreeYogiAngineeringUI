@@ -114,6 +114,23 @@ export interface DeviceToken {
   lastSeenOn?: string;
 }
 
+export interface NotificationCenterItem {
+  correlationId: string;
+  productionReportCorrelationId: string;
+  notificationType: string;
+  title: string;
+  body: string;
+  operatorName: string;
+  itemCode: string;
+  slotFromTime: string;
+  slotToTime: string;
+  status: string;
+  isRead: boolean;
+  createdOn: string;
+  sentAt?: string;
+  errorMessage?: string;
+}
+
 export interface Customer {
   correlationId: string;
   customerName: string;

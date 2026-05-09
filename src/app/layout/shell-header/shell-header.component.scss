@@ -97,6 +97,7 @@
   flex: 0 0 auto;
 }
 
+.shell-header__notifications,
 .shell-header__notification {
   position: relative;
 }
@@ -115,6 +116,133 @@
   font-size: 0.62rem;
   font-weight: 800;
   box-shadow: 0 0 0 2px #ffffff;
+}
+
+.shell-header__notification-panel {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  z-index: 45;
+  width: min(25rem, calc(100vw - 1.5rem));
+  overflow: hidden;
+  border: 1px solid #dfe6f1;
+  border-radius: var(--sp-radius-sm);
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+}
+
+.shell-header__notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.shell-header__notification-head strong {
+  color: #111827;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.shell-header__notification-head button {
+  border: 0;
+  background: transparent;
+  color: var(--sp-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.shell-header__notification-list {
+  max-height: min(27rem, calc(100vh - 8rem));
+  overflow: auto;
+}
+
+.shell-header__notification-empty {
+  padding: 1.35rem 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.shell-header__notification-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-bottom: 1px solid #edf1f7;
+  background: #ffffff;
+  color: inherit;
+  text-align: left;
+}
+
+.shell-header__notification-item:last-child {
+  border-bottom: 0;
+}
+
+.shell-header__notification-item:hover {
+  background: #f6f9ff;
+}
+
+.shell-header__notification-item--unread {
+  background: #f2f7ff;
+}
+
+.shell-header__notification-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.shell-header__notification-item--unread .shell-header__notification-dot {
+  background: #2563eb;
+}
+
+.shell-header__notification-copy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.shell-header__notification-copy strong,
+.shell-header__notification-copy small,
+.shell-header__notification-copy em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-header__notification-copy strong {
+  color: #111827;
+  font-size: 0.88rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.shell-header__notification-copy small {
+  display: -webkit-box;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.shell-header__notification-copy em {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.shell-header__notification-item time {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .shell-header__menu {
@@ -253,6 +381,14 @@
 
   .shell-header__actions {
     gap: 0.25rem;
+  }
+
+  .shell-header__notification-panel {
+    position: fixed;
+    top: 4.8rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
   }
 
   .shell-header__icon-button {

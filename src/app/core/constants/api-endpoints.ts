@@ -9,7 +9,11 @@ export const API_ENDPOINTS = {
   },
   notifications: {
     registerDevice: '/notifications/register-device',
-    unregisterDevice: '/notifications/unregister-device'
+    unregisterDevice: '/notifications/unregister-device',
+    list: '/notifications',
+    unreadCount: '/notifications/unread-count',
+    markRead: (correlationId: string) => `/notifications/${correlationId}/read`,
+    markAllRead: '/notifications/read-all'
   },
   roles: {
     list: '/roles',

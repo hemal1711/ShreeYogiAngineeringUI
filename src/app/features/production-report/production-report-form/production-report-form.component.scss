@@ -1,5 +1,38 @@
 @use '../../shared-management-form';
 
+:host ::ng-deep .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .badge-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+:host ::ng-deep .badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+:host ::ng-deep .badge-warning {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+:host ::ng-deep .badge-info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .production-report-form {
   display: grid;
   gap: 1rem;

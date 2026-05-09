@@ -21,6 +21,58 @@
 
   <div class="shell-header__actions">
     @if (currentUser(); as user) {
+      <div class="shell-header__notifications">
+        <button
+          type="button"
+          class="shell-header__icon-button shell-header__notification"
+          (click)="toggleNotifications()"
+          [attr.aria-expanded]="notificationsOpen()"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <i class="bi bi-bell"></i>
+          @if (unreadCount() > 0) {
+            <span>{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+          }
+        </button>
+
+        @if (notificationsOpen()) {
+          <div class="shell-header__notification-panel">
+            <div class="shell-header__notification-head">
+              <strong>Notifications</strong>
+              @if (unreadCount() > 0) {
+                <button type="button" (click)="markAllNotificationsRead()">Mark all read</button>
+              }
+            </div>
+
+            <div class="shell-header__notification-list">
+              @if (notificationsLoading()) {
+                <div class="shell-header__notification-empty">Loading notifications...</div>
+              } @else if (notifications().length === 0) {
+                <div class="shell-header__notification-empty">No notifications yet</div>
+              } @else {
+                @for (notification of notifications(); track notification.correlationId) {
+                  <button
+                    type="button"
+                    class="shell-header__notification-item"
+                    [class.shell-header__notification-item--unread]="!notification.isRead"
+                    (click)="openNotification(notification)"
+                  >
+                    <span class="shell-header__notification-dot"></span>
+                    <span class="shell-header__notification-copy">
+                      <strong>{{ notification.title }}</strong>
+                      <small>{{ notification.body }}</small>
+                      <em>{{ notificationSubtitle(notification) }}</em>
+                    </span>
+                    <time>{{ notification.createdOn | date: 'shortTime' }}</time>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+
       <div class="shell-header__menu">
         <button type="button" class="shell-header__profile" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
           <div class="shell-header__avatar">{{ initials() }}</div>

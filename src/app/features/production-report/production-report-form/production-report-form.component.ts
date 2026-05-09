@@ -340,7 +340,7 @@ export class ProductionReportFormComponent {
 
   checkOutNow(): void {
     if (this.form.controls.operatorOutTime.value) {
-      this.toastService.warning('Operator out time is already recorded. Admin can correct it if needed.', 'Already recorded');
+      this.completeReport();
       return;
     }
 
