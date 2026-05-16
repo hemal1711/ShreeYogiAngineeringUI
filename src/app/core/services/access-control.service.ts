@@ -450,6 +450,7 @@ export class AccessControlService {
     formData.append('description', request.description ?? '');
     formData.append('photoUrl', request.photoUrl ?? '');
     formData.append('lowStockThreshold', String(request.lowStockThreshold ?? 0));
+    formData.append('openingStock', String(request.openingStock ?? 0));
     formData.append('isActive', String(request.isActive));
     if (photo) {
       formData.append('photo', photo);
@@ -467,6 +468,7 @@ export class AccessControlService {
     formData.append('location', request.location ?? '');
     formData.append('photoUrl', request.photoUrl ?? '');
     formData.append('lowStockThreshold', String(request.lowStockThreshold ?? 0));
+    formData.append('openingStock', String(request.openingStock ?? 0));
     formData.append('isActive', String(request.isActive));
     if (photo) {
       formData.append('photo', photo);

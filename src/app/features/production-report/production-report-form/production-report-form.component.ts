@@ -765,6 +765,7 @@ export class ProductionReportFormComponent {
           customerName: report.customerName,
           customerCode: report.customerCode,
           lowStockThreshold: 0,
+          openingStock: 0,
           isActive: true,
           createdOn: report.createdOn
         }

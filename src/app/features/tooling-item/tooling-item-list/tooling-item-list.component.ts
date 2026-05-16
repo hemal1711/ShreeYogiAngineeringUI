@@ -50,7 +50,7 @@ private readonly service = inject(AccessControlService);
   onSearch(): void { this.pageNumber.set(1); this.loadItems(); }
   onPageChange(page: number): void { this.pageNumber.set(page); this.loadItems(); }
   exportCsv(): void {
-    this.downloadCsv('tooling-items.csv', [['Item Code','Item Name','Customer','Location','Unit','Low Stock','Status'], ...this.items().map(x => [x.itemCode, x.itemName, `${x.customerName} (${x.customerCode})`, x.location || '', x.unit || '', String(x.lowStockThreshold), x.isActive ? 'Active' : 'Inactive'])]);
+    this.downloadCsv('tooling-items.csv', [['Item Code','Item Name','Customer','Location','Unit','Opening Stock','Low Stock','Status'], ...this.items().map(x => [x.itemCode, x.itemName, `${x.customerName} (${x.customerCode})`, x.location || '', x.unit || '', String(x.openingStock ?? 0), String(x.lowStockThreshold), x.isActive ? 'Active' : 'Inactive'])]);
   }
   onDelete(item: ToolingItem): void {
     this.dialogService.showDelete('tooling item').then((confirmed) => {

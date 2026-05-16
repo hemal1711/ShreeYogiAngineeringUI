@@ -45,6 +45,7 @@ export class ToolingItemFormComponent {
     location: ['', Validators.maxLength(200)],
     description: ['', Validators.maxLength(1000)],
     lowStockThreshold: [0, [Validators.required, Validators.min(0)]],
+    openingStock: [0, [Validators.min(0)]],
     isActive: [true]
   });
   constructor() { const id = this.route.snapshot.paramMap.get('id'); if (id) { this.correlationId.set(id); this.pageTitle.set('Edit Tooling Item'); } this.loadPage(id); }
@@ -52,7 +53,8 @@ export class ToolingItemFormComponent {
     if (this.form.invalid) { Object.values(this.form.controls).forEach((c) => c.markAsTouched()); this.toastService.warning('Please complete required fields.', 'Item needs attention'); return; }
     if (!this.hasPhoto()) { this.toastService.warning('Please upload an item photo before saving.', 'Photo required'); return; }
     const id = this.correlationId(); this.isSubmitting.set(true);
-    const request = { ...this.form.value, photoUrl: this.currentPhotoUrl() ?? undefined };
+    const { openingStock, ...formValue } = this.form.value;
+    const request = { ...formValue, openingStock: id ? 0 : openingStock, photoUrl: this.currentPhotoUrl() ?? undefined };
     const op = id ? this.service.updateToolingItem(id, request, this.selectedPhoto()) : this.service.createToolingItem(request, this.selectedPhoto());
     op.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: () => { this.isSubmitting.set(false); this.toastService.success('Tooling item saved successfully.', 'Item saved'); this.router.navigate(['/tooling-items']); }, error: (error) => { this.isSubmitting.set(false); this.toastService.error(error?.error?.message || 'We could not save this item.', 'Save failed'); } });
   }

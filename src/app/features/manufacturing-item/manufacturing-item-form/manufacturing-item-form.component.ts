@@ -43,6 +43,7 @@ export class ManufacturingItemFormComponent {
     unit: ['PCS', Validators.maxLength(30)],
     description: ['', Validators.maxLength(1000)],
     lowStockThreshold: [0, [Validators.required, Validators.min(0)]],
+    openingStock: [0, [Validators.min(0)]],
     isActive: [true]
   });
   constructor() {
@@ -72,7 +73,8 @@ export class ManufacturingItemFormComponent {
     if (this.form.invalid) { Object.values(this.form.controls).forEach((c) => c.markAsTouched()); this.toastService.warning('Please complete required fields.', 'Item needs attention'); return; }
     if (!this.hasPhoto()) { this.toastService.warning('Please upload an item photo before saving.', 'Photo required'); return; }
     const id = this.correlationId();
-    const request = { ...this.form.value, photoUrl: this.currentPhotoUrl() ?? undefined };
+    const { openingStock, ...formValue } = this.form.value;
+    const request = { ...formValue, openingStock: id ? 0 : openingStock, photoUrl: this.currentPhotoUrl() ?? undefined };
     this.isSubmitting.set(true);
     const op = id ? this.service.updateManufacturingItem(id, request, this.selectedPhoto()) : this.service.createManufacturingItem(request, this.selectedPhoto());
     op.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

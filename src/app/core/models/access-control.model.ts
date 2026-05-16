@@ -164,6 +164,7 @@ export interface ManufacturingItem {
   description?: string;
   photoUrl?: string;
   lowStockThreshold: number;
+  openingStock: number;
   isActive: boolean;
   createdOn: string;
 }
@@ -176,6 +177,7 @@ export interface ManufacturingItemRequest {
   description?: string;
   photoUrl?: string;
   lowStockThreshold: number;
+  openingStock?: number;
   isActive: boolean;
 }
 
@@ -209,6 +211,7 @@ export interface ToolingItem {
   location?: string;
   photoUrl?: string;
   lowStockThreshold: number;
+  openingStock: number;
   isActive: boolean;
   createdOn: string;
 }
@@ -222,6 +225,7 @@ export interface ToolingItemRequest {
   location?: string;
   photoUrl?: string;
   lowStockThreshold: number;
+  openingStock?: number;
   isActive: boolean;
 }
 
