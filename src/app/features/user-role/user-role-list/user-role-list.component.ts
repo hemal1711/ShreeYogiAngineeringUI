@@ -153,10 +153,10 @@ private readonly accessControlService = inject(AccessControlService);
       return;
     }
 
-    this.accessControlService.getUsers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.accessControlService.getUsers(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => this.users.set(((response.data as PagedResponse<User> | undefined)?.items ?? []).filter((user) => !this.isSuperAdminUser(user.userName)))
     });
-    this.accessControlService.getRoles(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.accessControlService.getRoles(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => this.roles.set(((response.data as PagedResponse<Role> | undefined)?.items ?? []).filter((role) => !role.isSystemRole))
     });
   }

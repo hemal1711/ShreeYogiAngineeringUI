@@ -165,7 +165,7 @@ private readonly accessControlService = inject(AccessControlService);
 
     this.isLoading.set(true);
     forkJoin({
-      roles: this.accessControlService.getRoles(1, 200),
+      roles: this.accessControlService.getRoles(1, 500),
       permissions: this.accessControlService.getPermissions(1, 500)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ roles, permissions }) => {

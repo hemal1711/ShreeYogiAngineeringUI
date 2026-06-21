@@ -184,7 +184,7 @@ private readonly formBuilder = inject(FormBuilder);
       return;
     }
 
-    const roles$ = this.canShowRolePicker ? this.accessControlService.getRoles(1, 200) : of(null);
+    const roles$ = this.canShowRolePicker ? this.accessControlService.getRoles(1, 500) : of(null);
     const user$ = userId ? this.accessControlService.getUser(userId) : of(null);
     const userRoles$ = userId && this.canShowRolePicker ? this.accessControlService.getRolesForUser(userId) : of(null);
 

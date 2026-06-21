@@ -175,7 +175,7 @@ export class RoleFormComponent {
 
   private loadPage(roleId: string | null): void {
     this.isLoading.set(true);
-    const permissions$ = this.canShowPermissionPicker ? this.accessControlService.getPermissions(1, 200) : of(null);
+    const permissions$ = this.canShowPermissionPicker ? this.accessControlService.getPermissions(1, 500) : of(null);
     const role$ = roleId ? this.accessControlService.getRole(roleId) : of(null);
     const assigned$ = roleId && this.canShowPermissionPicker ? this.accessControlService.getRolePermissionIds(roleId) : of(null);
 

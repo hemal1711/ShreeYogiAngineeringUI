@@ -75,13 +75,13 @@ export class ProductionReportListComponent {
 
   loadLookups(): void {
     if (this.canReadCustomers) {
-      this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+      this.service.getCustomers(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
         this.customers.set((response.data as PagedResponse<Customer> | undefined)?.items ?? []);
       });
     }
 
     if (this.canReadManufacturingItems) {
-      this.service.getManufacturingItems(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
+      this.service.getManufacturingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
         this.items.set((response.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? []);
       });
     }

@@ -27,7 +27,7 @@ export class ToolingOperationListComponent {
   constructor() { this.loadLookups(); this.loadOperations(); }
   get totalPages(): number { return Math.ceil(this.totalCount() / this.pageSize()); }
   get pageRange(): number[] { const s = Math.max(1, this.pageNumber() - 2); const e = Math.min(this.totalPages, s + 4); return Array.from({ length: Math.max(0, e - s + 1) }, (_, i) => s + i); }
-  loadLookups(): void { this.service.getToolingItems(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ToolingItem> | undefined)?.items ?? [])); }
+  loadLookups(): void { this.service.getToolingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ToolingItem> | undefined)?.items ?? [])); }
   loadOperations(): void { this.isLoading.set(true); this.service.getToolingOperations(this.pageNumber(), this.pageSize(), this.filter).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: r => { const d = r.data as PagedResponse<ToolingOperation> | undefined; this.operations.set(d?.items ?? []); this.totalCount.set(d?.totalCount ?? 0); this.isLoading.set(false); }, error: e => { this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load operations.', 'Operations not loaded'); } }); }
   onFilter(): void { this.pageNumber.set(1); this.loadOperations(); }
   onPageChange(page: number): void { this.pageNumber.set(page); this.loadOperations(); }

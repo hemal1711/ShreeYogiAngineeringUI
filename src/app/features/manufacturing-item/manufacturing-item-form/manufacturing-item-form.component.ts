@@ -95,7 +95,7 @@ export class ManufacturingItemFormComponent {
   }
   private loadPage(id: string | null): void {
     this.isLoading.set(true);
-    this.service.getCustomers(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.getCustomers(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (customersResponse) => {
         this.customers.set((customersResponse.data as PagedResponse<Customer> | undefined)?.items ?? []);
         if (id) this.loadItem(id); else this.isLoading.set(false);

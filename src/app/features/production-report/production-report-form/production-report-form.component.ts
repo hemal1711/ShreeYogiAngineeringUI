@@ -427,10 +427,10 @@ export class ProductionReportFormComponent {
   private loadPage(id: string | null): void {
     this.isLoading.set(true);
     forkJoin({
-      items: this.canReadManufacturingItems ? this.service.getManufacturingItems(1, 200) : this.service.getProductionReportItemLookups(),
+      items: this.canReadManufacturingItems ? this.service.getManufacturingItems(1, 500) : this.service.getProductionReportItemLookups(),
       machineTypes: this.service.getMachineTypes(),
       machineNames: this.service.getMachineNames(),
-      users: this.canReadUsers ? this.service.getUsers(1, 200) : of(null)
+      users: this.canReadUsers ? this.service.getUsers(1, 500) : of(null)
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

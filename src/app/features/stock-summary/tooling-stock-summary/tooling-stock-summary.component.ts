@@ -27,7 +27,7 @@ private readonly service = inject(AccessControlService);
   readonly locations = computed(() => Array.from(new Set(this.items().map(x => x.location).filter(Boolean) as string[])).sort());
   readonly cards = computed(() => ({ inStock: this.rows().filter(x => x.status === 'In Stock').length, low: this.rows().filter(x => x.status === 'Low Stock').length, out: this.rows().filter(x => x.status === 'Out').length }));
   constructor() { this.loadLookups(); this.loadRows(); }
-  loadLookups(): void { this.service.getToolingItems(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ToolingItem> | undefined)?.items ?? [])); }
+  loadLookups(): void { this.service.getToolingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ToolingItem> | undefined)?.items ?? [])); }
   loadRows(): void { this.isLoading.set(true); this.service.getToolingStockSummary(this.filter).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: r => { this.rows.set(r.data ?? []); this.isLoading.set(false); }, error: e => { this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load stock summary.', 'Stock not loaded'); } }); }
   exportCsv(): void { const rows = [['Item Code','Item Name','Location','Received','Used','In Hand','Status'], ...this.rows().map(x => [x.itemCode, x.itemName, x.location || '', String(x.receivedQty), String(x.usedQty), String(x.qtyInHand), x.status])]; this.downloadCsv('tooling-stock-summary.csv', rows); }
   format(value: number): string { return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(value); }
