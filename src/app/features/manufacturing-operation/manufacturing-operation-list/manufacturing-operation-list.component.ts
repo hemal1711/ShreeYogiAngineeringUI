@@ -20,15 +20,16 @@ import { ToastService } from '../../../shared/components/toast';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManufacturingOperationListComponent {
-  
+
   private readonly destroyRef = inject(DestroyRef);
-private readonly service = inject(AccessControlService);
+  private readonly service = inject(AccessControlService);
   private readonly permissionService = inject(PermissionService);
   private readonly dialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
   readonly operations = signal<ManufacturingOperation[]>([]);
   readonly customers = signal<Customer[]>([]);
   readonly items = signal<ManufacturingItem[]>([]);
+  readonly filteredItems = signal<ManufacturingItem[]>([]);
   readonly isLoading = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pageNumber = signal(1);
@@ -61,4 +62,28 @@ private readonly service = inject(AccessControlService);
   getPhotoUrl(photoUrl?: string): string { if (!photoUrl) return ''; if (/^https?:\/\//i.test(photoUrl)) return photoUrl; return `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}${photoUrl}`; }
   openPhoto(photoUrl?: string): void { if (photoUrl) this.previewPhotoUrl.set(this.getPhotoUrl(photoUrl)); }
   closePhoto(): void { this.previewPhotoUrl.set(null); }
+
+  onCustomerChange(): void {
+    const customerId = this.filter.customerCorrelationId;
+
+    if (!customerId) {
+      // this.filteredItems.set(this.items());
+      this.filteredItems.set([]);
+      this.filter.itemCorrelationId = '';
+      this.onFilter();
+      return;
+    }
+
+    const filtered = this.items().filter(
+      i => i.customerCorrelationId === customerId
+    );
+
+    this.filteredItems.set(filtered);
+
+    if (!filtered.some(i => i.correlationId === this.filter.itemCorrelationId)) {
+      this.filter.itemCorrelationId = '';
+    }
+
+    this.onFilter();
+  }
 }

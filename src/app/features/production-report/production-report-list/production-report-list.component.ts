@@ -35,6 +35,7 @@ export class ProductionReportListComponent {
   readonly reports = signal<ProductionReport[]>([]);
   readonly customers = signal<Customer[]>([]);
   readonly items = signal<ManufacturingItem[]>([]);
+  readonly filteredItems = signal<ManufacturingItem[]>([]);
   readonly machineTypes = signal<MachineType[]>([]);
   readonly isLoading = signal(false);
   readonly deletingId = signal<string | null>(null);
@@ -265,5 +266,28 @@ export class ProductionReportListComponent {
   statusClass(status: string | null | undefined): string {
     const value = (status || 'Open').toLowerCase();
     return value === 'completed' ? 'badge-success' : value === 'cancelled' ? 'badge-danger' : 'badge-info';
+  }
+
+  onCustomerChange(): void {
+    const customerId = this.filter.customerCorrelationId;
+
+    if (!customerId) {
+      this.filteredItems.set([]);
+      this.filter.itemCorrelationId = '';
+      this.onFilter();
+      return;
+    }
+
+    const filtered = this.items().filter(
+      i => i.customerCorrelationId === customerId
+    );
+
+    this.filteredItems.set(filtered);
+
+    if (!filtered.some(i => i.correlationId === this.filter.itemCorrelationId)) {
+      this.filter.itemCorrelationId = '';
+    }
+
+    this.onFilter();
   }
 }
