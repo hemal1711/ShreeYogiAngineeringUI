@@ -10,11 +10,12 @@ import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.compo
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
 import { environment } from '../../../../environments/environment';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-tooling-item-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent],
+  imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent, NgSelectModule],
   templateUrl: './tooling-item-form.component.html',
   styleUrl: './tooling-item-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -5,12 +5,14 @@ import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import {
+  Customer,
   MachineName,
   MachineType,
   ManufacturingItem,
   PagedResponse,
   ProductionReport,
   ProductionReportEntry,
+  ProductionReportSetupTime,
   ProductionReportRequest,
   User
 } from '../../../core/models/access-control.model';
@@ -68,6 +70,8 @@ export class ProductionReportFormComponent {
   private readonly toastService = inject(ToastService);
 
   readonly items = signal<ManufacturingItem[]>([]);
+  readonly filteredItems = signal<ManufacturingItem[]>([]);
+  readonly customers = signal<Customer[]>([]);
   readonly machineTypeOptions = signal<MachineType[]>([]);
   readonly machineNameOptions = signal<MachineName[]>([]);
   readonly users = signal<User[]>([]);
@@ -81,6 +85,7 @@ export class ProductionReportFormComponent {
   readonly reportStatus = signal('Open');
   readonly formVersion = signal(0);
   readonly canManageHeader = this.permissionService.has('productionreport.manage');
+  private pendingAutoAddSlot: { fromTime: string; toTime: string } | null = null;
   readonly canCreateReport = this.permissionService.has('productionreport.create');
   readonly canUpdateReport = this.permissionService.has('productionreport.update');
   readonly canReopenMissedEntries = this.permissionService.has('productionreport.missed.reopen');
@@ -92,6 +97,7 @@ export class ProductionReportFormComponent {
   readonly idleReasons = ['Tool Change', 'Power Cut', 'Machine Breakdown', 'Material Not Available', 'Setting Time'];
 
   readonly form = this.fb.group({
+    customerCorrelationId: [''],
     manufacturingItemCorrelationId: ['', Validators.required],
     machineType: ['', Validators.required],
     machineName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -107,6 +113,7 @@ export class ProductionReportFormComponent {
     dinnerInTime: [''],
     setupStartTime: [''],
     setupEndTime: [''],
+    setupTimes: this.fb.array([]),
     cycleTimeMinutes: [null as number | null, [Validators.min(0.01)]],
     loadUnloadTimeMinutes: [null as number | null, [Validators.min(0)]],
     partsPerCycle: [1 as number | null, [Validators.min(1)]],
@@ -148,6 +155,25 @@ export class ProductionReportFormComponent {
       }
     });
 
+    this.form.controls.customerCorrelationId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((customerId) => {
+      this.onCustomerChange(customerId);
+    });
+
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const autoAdd = params.get('autoAddSlot');
+      const slotFrom = params.get('slotFrom');
+      const slotTo = params.get('slotTo');
+
+      if (autoAdd === 'true' && slotFrom && slotTo) {
+        this.pendingAutoAddSlot = {
+          fromTime: this.normalizeTimeInput(slotFrom) ?? slotFrom,
+          toTime: this.normalizeTimeInput(slotTo) ?? slotTo
+        };
+      } else {
+        this.pendingAutoAddSlot = null;
+      }
+    });
+
     this.loadPage(id);
   }
 
@@ -155,19 +181,32 @@ export class ProductionReportFormComponent {
     return this.form.get('entries') as FormArray<FormGroup>;
   }
 
+  get setupTimesArray(): FormArray<FormGroup> {
+    return this.form.get('setupTimes') as FormArray<FormGroup>;
+  }
+
+  addSetupTime(): void {
+    const last = this.setupTimesArray.at(this.setupTimesArray.length - 1)?.getRawValue();
+    this.setupTimesArray.push(this.createSetupTimeGroup({
+      setupStartTime: last?.setupEndTime || '',
+      setupEndTime: ''
+    }));
+    this.form.markAsDirty();
+    this.refreshUi();
+  }
+
+  removeSetupTime(index: number): void {
+    this.setupTimesArray.removeAt(index);
+    this.form.markAsDirty();
+    this.refreshUi();
+  }
+
   addManualEntry(): void {
     const last = this.entriesArray.at(this.entriesArray.length - 1)?.getRawValue();
     const fromTime = last?.toTime || this.form.controls.operatorInTime.value || '';
     const toTime = this.addOneHour(fromTime);
 
-    if (!this.isSlotInsideVisibleOperatorTime(fromTime, toTime)) {
-      this.toastService.warning('This hourly slot is outside the operator in/out time. Save correct operator time first.', 'Invalid slot');
-      return;
-    }
-
-    this.entriesArray.push(this.createEntryGroup({ fromTime, toTime, okQuantity: 0, rejectedQuantity: 0 }));
-    this.form.markAsDirty();
-    this.formVersion.update((value) => value + 1);
+    this.addEntrySlot(fromTime, toTime);
   }
 
   onSubmit(): void {
@@ -406,6 +445,36 @@ export class ProductionReportFormComponent {
     return this.canManageHeader || (!this.hasStartedEntries() && this.canEditHeader());
   }
 
+  private addEntrySlot(fromTime: string | null | undefined, toTime: string | null | undefined): boolean {
+    const normalizedFromTime = this.normalizeTimeInput(fromTime);
+    const normalizedToTime = this.normalizeTimeInput(toTime);
+
+    if (!normalizedFromTime || !normalizedToTime) {
+      this.toastService.warning('Please provide a valid hourly slot range.', 'Invalid slot');
+      return false;
+    }
+
+    if (!this.isSlotInsideVisibleOperatorTime(normalizedFromTime, normalizedToTime)) {
+      this.toastService.warning('This hourly slot is outside the operator in/out time. Save correct operator time first.', 'Invalid slot');
+      return false;
+    }
+
+    const exists = this.entriesArray.controls.some((control) => {
+      const value = control.getRawValue();
+      return this.normalizeTimeInput(value.fromTime) === normalizedFromTime && this.normalizeTimeInput(value.toTime) === normalizedToTime;
+    });
+
+    if (exists) {
+      this.toastService.info('This hourly slot already exists.', 'Slot already added');
+      return false;
+    }
+
+    this.entriesArray.push(this.createEntryGroup({ fromTime: normalizedFromTime, toTime: normalizedToTime, okQuantity: 0, rejectedQuantity: 0 }));
+    this.form.markAsDirty();
+    this.formVersion.update((value) => value + 1);
+    return true;
+  }
+
   private createEntryGroup(entry?: Partial<ProductionReportEntry>): FormGroup {
     const locked = this.isLockedEntry(entry);
     const group = this.fb.group({
@@ -428,14 +497,19 @@ export class ProductionReportFormComponent {
     this.isLoading.set(true);
     forkJoin({
       items: this.canReadManufacturingItems ? this.service.getManufacturingItems(1, 500) : this.service.getProductionReportItemLookups(),
+      customers: this.canReadManufacturingItems ? this.service.getCustomers(1, 500) : this.service.getCustomersLookup(),
       machineTypes: this.service.getMachineTypes(),
       machineNames: this.service.getMachineNames(),
       users: this.canReadUsers ? this.service.getUsers(1, 500) : of(null)
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ items, machineTypes, machineNames, users }) => {
-          this.items.set(this.resolveItems(items?.data));
+        next: ({ items, customers, machineTypes, machineNames, users }) => {
+          const manufacturingItems = this.resolveItems(items?.data);
+          const customerOptions = this.resolveCustomers(customers?.data);
+          this.items.set(manufacturingItems);
+          this.filteredItems.set(manufacturingItems);
+          this.customers.set(customerOptions);
           this.machineTypeOptions.set((machineTypes.data as MachineType[] | undefined) ?? []);
           this.machineNameOptions.set((machineNames.data as MachineName[] | undefined) ?? []);
           this.users.set(this.canReadUsers
@@ -470,7 +544,11 @@ export class ProductionReportFormComponent {
   private applyReport(report: ProductionReport): void {
     this.correlationId.set(report.correlationId);
     this.reportStatus.set(report.reportStatus ?? 'Open');
+    const selectedCustomerId = report.customerCorrelationId || '';
+    const filteredItems = this.items().filter((item) => !selectedCustomerId || item.customerCorrelationId === selectedCustomerId);
+    this.filteredItems.set(filteredItems);
     this.form.patchValue({
+      customerCorrelationId: selectedCustomerId,
       manufacturingItemCorrelationId: report.manufacturingItemCorrelationId,
       machineType: report.machineType,
       machineName: report.machineName,
@@ -499,15 +577,49 @@ export class ProductionReportFormComponent {
     this.ensureCurrentReportLookups(report);
 
     this.entriesArray.clear();
+    this.setupTimesArray.clear();
+    this.resolveSetupTimes(report).forEach((setup) => this.setupTimesArray.push(this.createSetupTimeGroup(setup)));
     report.entries.forEach((entry) => this.entriesArray.push(this.createEntryGroup(this.normalizeEntry(entry))));
+    this.applyPendingAutoAddSlot();
     this.applyHeaderControlState();
     this.syncPerHourQuantity();
     this.form.markAsPristine();
     this.refreshUi();
   }
 
+  private applyPendingAutoAddSlot(): void {
+    if (!this.pendingAutoAddSlot || !this.correlationId()) {
+      return;
+    }
+
+    const { fromTime, toTime } = this.pendingAutoAddSlot;
+    const didAdd = this.addEntrySlot(fromTime, toTime);
+    if (didAdd) {
+      this.pendingAutoAddSlot = null;
+      this.toastService.info('The missed slot has been added for you. Review it and save when ready.', 'Slot added');
+    }
+  }
+
+  private onCustomerChange(customerId: string | null | undefined): void {
+    const selectedCustomerId = customerId || '';
+    const filteredItems = this.items().filter((item) => !selectedCustomerId || item.customerCorrelationId === selectedCustomerId);
+    this.filteredItems.set(filteredItems);
+
+    if (!selectedCustomerId) {
+      this.form.controls.manufacturingItemCorrelationId.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const currentSelection = this.form.controls.manufacturingItemCorrelationId.value;
+    const stillValid = filteredItems.some((item) => item.correlationId === currentSelection);
+    if (!stillValid) {
+      this.form.controls.manufacturingItemCorrelationId.setValue('', { emitEvent: false });
+    }
+  }
+
   private buildHeaderRequest(): ProductionReportRequest {
     const raw = this.form.getRawValue();
+    const setupTimes = raw.setupTimes as Array<{ correlationId?: string | null; setupStartTime?: string; setupEndTime?: string; remarks?: string }>;
     return {
       manufacturingItemCorrelationId: raw.manufacturingItemCorrelationId || '',
       machineType: raw.machineType || '',
@@ -522,8 +634,8 @@ export class ProductionReportFormComponent {
       lunchInTime: this.withSeconds(raw.lunchInTime),
       dinnerOutTime: this.withSeconds(raw.dinnerOutTime),
       dinnerInTime: this.withSeconds(raw.dinnerInTime),
-      setupStartTime: this.withSeconds(raw.setupStartTime),
-      setupEndTime: this.withSeconds(raw.setupEndTime),
+      setupStartTime: this.withSeconds(setupTimes[0]?.setupStartTime),
+      setupEndTime: this.withSeconds(setupTimes[0]?.setupEndTime),
       cycleTimeMinutes: this.toNullableNumber(raw.cycleTimeMinutes),
       loadUnloadTimeMinutes: this.toNullableNumber(raw.loadUnloadTimeMinutes),
       partsPerCycle: this.toNullableNumber(raw.partsPerCycle),
@@ -535,8 +647,23 @@ export class ProductionReportFormComponent {
       machineBreakdownMinutes: this.toNullableNumber(raw.machineBreakdownMinutes),
       toolBreakdownMinutes: this.toNullableNumber(raw.toolBreakdownMinutes),
       remarks: raw.remarks?.trim() || undefined,
+      setupTimes: setupTimes.map((setup) => ({
+        correlationId: setup.correlationId ?? undefined,
+        setupStartTime: this.withSeconds(setup.setupStartTime) || '00:00:00',
+        setupEndTime: this.withSeconds(setup.setupEndTime) || '00:00:00',
+        remarks: setup.remarks?.trim() || undefined
+      })),
       entries: []
     };
+  }
+
+  private createSetupTimeGroup(setup?: Partial<ProductionReportSetupTime>): FormGroup {
+    return this.fb.group({
+      correlationId: [setup?.correlationId ?? null],
+      setupStartTime: [setup?.setupStartTime?.slice(0, 5) ?? '', Validators.required],
+      setupEndTime: [setup?.setupEndTime?.slice(0, 5) ?? '', Validators.required],
+      remarks: [setup?.remarks ?? '', Validators.maxLength(500)]
+    });
   }
 
   private entryRequest(group: AbstractControl): ProductionReportEntry {
@@ -657,8 +784,7 @@ export class ProductionReportFormComponent {
       'lunchInTime',
       'dinnerOutTime',
       'dinnerInTime',
-      'setupStartTime',
-      'setupEndTime',
+      'setupTimes',
       'cycleTimeMinutes',
       'loadUnloadTimeMinutes',
       'partsPerCycle',
@@ -668,6 +794,28 @@ export class ProductionReportFormComponent {
       'toolBreakdownMinutes',
       'remarks'
     ].some((name) => this.form.get(name)?.dirty);
+  }
+
+  private normalizeTimeInput(value: string | null | undefined): string | null {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    const twentyFourHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (twentyFourHourMatch) {
+      return `${twentyFourHourMatch[1].padStart(2, '0')}:${twentyFourHourMatch[2]}`;
+    }
+
+    const twelveHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!twelveHourMatch) return null;
+
+    let hours = Number(twelveHourMatch[1]);
+    const minutes = twelveHourMatch[2];
+    const meridiem = twelveHourMatch[3].toUpperCase();
+
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
   }
 
   private isSlotInsideVisibleOperatorTime(fromTime: string | null | undefined, toTime: string | null | undefined): boolean {
@@ -699,8 +847,6 @@ export class ProductionReportFormComponent {
 
     const editableHeaderControls = [
       'jobName',
-      'setupStartTime',
-      'setupEndTime',
       'cycleTimeMinutes',
       'loadUnloadTimeMinutes',
       'partsPerCycle',
@@ -807,6 +953,12 @@ export class ProductionReportFormComponent {
     return (data as PagedResponse<ManufacturingItem>).items ?? [];
   }
 
+  private resolveCustomers(data: unknown): Customer[] {
+    if (!data) return [];
+    if (Array.isArray(data)) return data as Customer[];
+    return (data as PagedResponse<Customer>).items ?? [];
+  }
+
   private normalizeEntry(entry: ProductionReportEntry): ProductionReportEntry {
     if (!entry.lockedAt && String(entry.entryStatus ?? '').toLowerCase() === 'locked') {
       return { ...entry, entryStatus: 'Submitted' };
@@ -819,7 +971,10 @@ export class ProductionReportFormComponent {
 
     const lunchBreakMinutes = this.minutesBetween('lunchOutTime', 'lunchInTime');
     const dinnerBreakMinutes = this.minutesBetween('dinnerOutTime', 'dinnerInTime');
-    const setupMinutes = this.minutesBetween('setupStartTime', 'setupEndTime');
+    const setupMinutes = this.setupTimesArray.controls.reduce((sum, control) => {
+      const value = control.getRawValue();
+      return sum + this.minutesBetweenValues(value.setupStartTime, value.setupEndTime);
+    }, 0);
 
     const idleMinutes = this.numberValue('idleMinutes');
     const machineBreakdownMinutes = this.numberValue('machineBreakdownMinutes');
@@ -896,7 +1051,42 @@ export class ProductionReportFormComponent {
 
     return this.validateBreakPair('lunchOutTime', 'lunchInTime', 'Lunch', showMessage) &&
       this.validateBreakPair('dinnerOutTime', 'dinnerInTime', 'Dinner', showMessage) &&
-      this.validateClosedPair('setupStartTime', 'setupEndTime', 'Setup', showMessage);
+      this.validateSetupTimes(showMessage);
+  }
+
+  private validateSetupTimes(showMessage: boolean): boolean {
+    const ranges = this.setupTimesArray.controls.map((control) => control.getRawValue());
+
+    for (let index = 0; index < ranges.length; index++) {
+      const setup = ranges[index];
+      const start = this.toMinutes(setup.setupStartTime);
+      const end = this.toMinutes(setup.setupEndTime);
+
+      if (start === null || end === null) {
+        if (showMessage) this.toastService.warning(`Setup ${index + 1} in and out time are required.`, 'Invalid setup time');
+        return false;
+      }
+
+      const duration = this.minutesBetweenValues(setup.setupStartTime, setup.setupEndTime);
+      if (duration <= 0 || duration > 12 * 60) {
+        if (showMessage) this.toastService.warning(`Setup ${index + 1} time is not valid.`, 'Invalid setup time');
+        return false;
+      }
+
+      if (!this.isSlotInsideVisibleOperatorTime(setup.setupStartTime, setup.setupEndTime)) {
+        if (showMessage) this.toastService.warning(`Setup ${index + 1} must be inside operator in/out time.`, 'Invalid setup time');
+        return false;
+      }
+
+      for (let otherIndex = index + 1; otherIndex < ranges.length; otherIndex++) {
+        if (this.isOverlappingRange(setup.setupStartTime, setup.setupEndTime, ranges[otherIndex].setupStartTime, ranges[otherIndex].setupEndTime)) {
+          if (showMessage) this.toastService.warning('Setup times cannot overlap.', 'Invalid setup time');
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private validateBreakPair(startName: string, endName: string, label: string, showMessage: boolean): boolean {
@@ -958,6 +1148,46 @@ export class ProductionReportFormComponent {
     }
 
     return diff;
+  }
+
+  private minutesBetweenValues(startTime: string | null | undefined, endTime: string | null | undefined): number {
+    const start = this.toMinutes(startTime);
+    const end = this.toMinutes(endTime);
+
+    if (start === null || end === null) return 0;
+
+    let diff = end - start;
+    if (diff <= 0) diff += 24 * 60;
+    return diff;
+  }
+
+  private isOverlappingRange(startA: string, endA: string, startB: string, endB: string): boolean {
+    const aStart = this.toMinutes(startA);
+    const aEnd = this.toMinutes(endA);
+    const bStart = this.toMinutes(startB);
+    const bEnd = this.toMinutes(endB);
+
+    if (aStart === null || aEnd === null || bStart === null || bEnd === null) return false;
+
+    return this.expandRange(aStart, aEnd).some((a) =>
+      this.expandRange(bStart, bEnd).some((b) => a.start < b.end && a.end > b.start)
+    );
+  }
+
+  private expandRange(start: number, end: number): { start: number; end: number }[] {
+    return end > start
+      ? [{ start, end }]
+      : [{ start, end: 24 * 60 }, { start: 0, end }];
+  }
+
+  private resolveSetupTimes(report: ProductionReport): ProductionReportSetupTime[] {
+    if (report.setupTimes?.length) {
+      return report.setupTimes;
+    }
+
+    return report.setupStartTime && report.setupEndTime
+      ? [{ setupStartTime: report.setupStartTime, setupEndTime: report.setupEndTime }]
+      : [];
   }
 
   private productionPresenceMinutes(): number {

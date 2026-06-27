@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
   },
   customers: {
     list: '/customers',
+    customerLookups: '/customers/lookups/customers',
     byId: (correlationId: string) => `/customers/${correlationId}`
   },
   fasteners: {

@@ -1,5 +1,7 @@
 @use '../../shared-management-form';
 
+
+
 :host ::ng-deep .badge {
   display: inline-flex;
   align-items: center;
@@ -184,14 +186,26 @@
   color: #526174;
 }
 
+.setup-time-list {
+  min-width: 0;
+  width: 100%;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
 
 table {
   width: 100%;
-  min-width: 930px;
   border-collapse: collapse;
+}
+
+.entries-table {
+  min-width: 930px;
+}
+
+.setup-table {
+  min-width: 500px;
 }
 
 th {

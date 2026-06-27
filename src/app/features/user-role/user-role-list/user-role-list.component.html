@@ -10,13 +10,13 @@
 
   @if (canShowAssignForm) {
     <form [formGroup]="form" (ngSubmit)="onAssign()" class="assignment-panel">
-      <select class="form-select" formControlName="userCorrelationId" aria-label="User">
+      <select class="form-select" formControlName="userCorrelationId">
         <option value="">Select user</option>
         @for (user of users(); track user.correlationId) {
           <option [value]="user.correlationId">{{ user.userName }}</option>
         }
       </select>
-      <select class="form-select" formControlName="roleCorrelationId" aria-label="Role">
+      <select class="form-select" formControlName="roleCorrelationId">
         <option value="">Select role</option>
         @for (role of roles(); track role.correlationId) {
           <option [value]="role.correlationId">{{ role.roleName }}</option>

@@ -10,8 +10,9 @@ import { PermissionService } from '../../../core/services/permission.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
+import { NgSelectModule } from '@ng-select/ng-select';
 
-@Component({ selector: 'app-tooling-operation-list', standalone: true, imports: [CommonModule, FormsModule, RouterLink, BreadcrumbComponent], templateUrl: './tooling-operation-list.component.html', styleUrl: './tooling-operation-list.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-tooling-operation-list', standalone: true, imports: [CommonModule, FormsModule, RouterLink, BreadcrumbComponent, NgSelectModule], templateUrl: './tooling-operation-list.component.html', styleUrl: './tooling-operation-list.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
 export class ToolingOperationListComponent {
 
   private readonly destroyRef = inject(DestroyRef);

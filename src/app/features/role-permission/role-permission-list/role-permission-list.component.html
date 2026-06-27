@@ -10,17 +10,17 @@
 
   @if (canShowAssignForm) {
     <form [formGroup]="form" (ngSubmit)="onAssign()" class="assignment-panel">
-      <select class="form-select" formControlName="roleCorrelationId" aria-label="Role">
+      <select class="form-select" formControlName="roleCorrelationId">
         <option value="">Select role</option>
         @for (role of roles(); track role.correlationId) {
           <option [value]="role.correlationId">{{ role.roleName }}</option>
         }
       </select>
 
-      <select class="form-select" formControlName="permissionCorrelationId" aria-label="Permission">
+      <select class="form-select" formControlName="permissionCorrelationId">
         <option value="">Select permission</option>
         @for (permission of availablePermissions(); track permission.correlationId) {
-          <option [value]="permission.correlationId">{{ permission.code }} - {{ permission.name }}</option>
+          <option [value]="permission.correlationId">{{ permission.code }}</option>
         }
       </select>
 

@@ -104,7 +104,7 @@ export class ShellHeaderComponent {
         this.loadNotificationCount();
       });
 
-    void this.router.navigateByUrl(`/production-reports/edit/${notification.productionReportCorrelationId}`);
+    void this.router.navigateByUrl(this.notificationLink(notification));
   }
 
   markAllNotificationsRead(): void {
@@ -166,5 +166,37 @@ export class ShellHeaderComponent {
           this.notificationsLoading.set(false);
         }
       });
+  }
+
+  private notificationLink(notification: NotificationCenterItem): string {
+    const fromTime = this.toTimeInputValue(notification.slotFromTime);
+    const toTime = this.toTimeInputValue(notification.slotToTime);
+    const query = fromTime && toTime
+      ? `?autoAddSlot=true&slotFrom=${encodeURIComponent(fromTime)}&slotTo=${encodeURIComponent(toTime)}`
+      : '';
+
+    return `/production-reports/edit/${notification.productionReportCorrelationId}${query}`;
+  }
+
+  private toTimeInputValue(value: string): string | null {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+
+    const twentyFourHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (twentyFourHourMatch) {
+      return `${twentyFourHourMatch[1].padStart(2, '0')}:${twentyFourHourMatch[2]}`;
+    }
+
+    const twelveHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!twelveHourMatch) return null;
+
+    let hours = Number(twelveHourMatch[1]);
+    const minutes = twelveHourMatch[2];
+    const meridiem = twelveHourMatch[3].toUpperCase();
+
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
   }
 }

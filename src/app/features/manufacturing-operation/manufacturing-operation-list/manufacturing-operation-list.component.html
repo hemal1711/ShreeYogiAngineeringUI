@@ -1,14 +1,26 @@
 <div class="management-page operation-page">
   <app-breadcrumb></app-breadcrumb>
-  <div class="page-header"><div><h1>Manufacturing Operations</h1><p>Track received, dispatched and rejected items.</p></div>@if (canCreate) { <a routerLink="/manufacturing-operations/add" class="btn btn-primary"><i class="bi bi-plus"></i> Add Operation</a> }</div>
+  <div class="page-header"><div><h1>Manufacturing Operations</h1><p>Track received and dispatched items.</p></div>@if (canCreate) { <a routerLink="/manufacturing-operations/add" class="btn btn-primary"><i class="bi bi-plus"></i> Add Operation</a> }</div>
   <section class="operation-filters"><h2><i class="bi bi-funnel"></i> Filters</h2><div class="operation-filters__grid">
-    <select class="form-select" [(ngModel)]="filter.customerCorrelationId" 
-    (change)="onCustomerChange()"><option value="">All Customers</option>
-    @for (customer of customers(); track customer.correlationId)
-     { <option [value]="customer.correlationId">{{ customer.customerName }}</option> }</select>
-     
-     <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()"><option value="">All Items</option>
-      @for (item of filteredItems(); track item.correlationId) { <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }}</option> }</select><select class="form-select" [(ngModel)]="filter.operationType" (change)="onFilter()"><option value="">All Types</option>@for (type of types; track type) { <option [value]="type">{{ type }}</option> }</select><input class="form-control" type="date" [(ngModel)]="filter.dateFrom" (change)="onFilter()" /><input class="form-control" type="date" [(ngModel)]="filter.dateTo" (change)="onFilter()" /></div><p>{{ totalCount() }} records found</p></section>
+    <select class="form-select" [(ngModel)]="filter.customerCorrelationId" (change)="onCustomerChange()">
+  <option value="">All Customers</option>
+  @for (customer of customers(); track customer.correlationId) {
+    <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+  }
+</select>
+    <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()">
+  <option value="">All Items</option>
+  @for (item of filteredItems(); track item.correlationId) {
+    <option [value]="item.correlationId">{{ item.itemCode }}</option>
+  }
+</select>
+    <select class="form-select" [(ngModel)]="filter.operationType" (change)="onFilter()">
+  <option value="">All Types</option>
+  @for (type of types; track type) {
+    <option [value]="type">{{ type }}</option>
+  }
+</select>
+    <input class="form-control" type="date" [(ngModel)]="filter.dateFrom" (change)="onFilter()" /><input class="form-control" type="date" [(ngModel)]="filter.dateTo" (change)="onFilter()" /></div><p>{{ totalCount() }} records found</p></section>
   <div class="toolbar operation-toolbar"><div class="search-box"><i class="bi bi-search"></i><input class="form-control" type="text" placeholder="Search..." [(ngModel)]="filter.search" (keyup.enter)="onFilter()" /><button type="button" class="btn btn-outline-primary" [disabled]="isLoading()" (click)="onFilter()">Search</button></div><button type="button" class="btn btn-outline-primary" (click)="exportCsv()"><i class="bi bi-download"></i> Export CSV</button></div>
   @if (isLoading()) { <div class="loading-state"><div class="spinner-border text-primary"></div><p>Loading operations...</p></div> }
   @if (!isLoading() && operations().length === 0) { <div class="empty-state"><i class="bi bi-inbox"></i><h3>No Operations Found</h3><p>Add the first manufacturing operation.</p></div> }

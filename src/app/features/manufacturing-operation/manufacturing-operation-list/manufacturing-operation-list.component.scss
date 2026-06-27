@@ -24,6 +24,7 @@
 }
 
 .operation-filters__grid .form-select,
+.operation-filters__grid .ng-select,
 .operation-filters__grid .form-control {
   width: min(100%, 15rem);
 }
@@ -120,6 +121,7 @@
   }
 
   .operation-filters__grid .form-select,
+  .operation-filters__grid .ng-select,
   .operation-filters__grid .form-control {
     width: 100%;
   }

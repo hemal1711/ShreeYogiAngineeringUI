@@ -35,43 +35,51 @@
         <div class="mb-3">
           <label class="form-label">Shift <span>*</span></label>
           <select class="form-select" formControlName="shiftName">
-            <option value="">Select shift</option>
-            @for (shift of shifts; track shift) {
-            <option [value]="shift">{{ shift }}</option>
-            }
-          </select>
+  <option value="">Select shift</option>
+  @for (shift of shifts; track shift) {
+    <option [value]="shift">{{ shift }}</option>
+  }
+</select>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Machine Type <span>*</span></label>
           <select class="form-select" formControlName="machineType">
-            <option value="">Select machine type</option>
-            @for (machineType of machineTypeOptions(); track machineType.correlationId) {
-            <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
-            }
-          </select>
+  <option value="">Select machine type</option>
+  @for (machineType of machineTypeOptions(); track machineType.typeName) {
+    <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
+  }
+</select>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Machine Name <span>*</span></label>
           <select class="form-select" formControlName="machineName" [class.is-invalid]="isFieldInvalid('machineName')">
-            <option value="">Select machine name</option>
-            @for (machineName of machineNames(); track machineName.correlationId) {
-            <option [value]="machineName.name">{{ machineName.name }}</option>
-            }
-          </select>
+  <option value="">Select machine name</option>
+  @for (machineName of machineNames(); track machineName.name) {
+    <option [value]="machineName.name">{{ machineName.name }}</option>
+  }
+</select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Customer</label>
+          <select class="form-select" formControlName="customerCorrelationId">
+  <option value="">Select customer</option>
+  @for (customer of customers(); track customer.correlationId) {
+    <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+  }
+</select>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Item <span>*</span></label>
-          <select class="form-select" formControlName="manufacturingItemCorrelationId"
-            [class.is-invalid]="isFieldInvalid('manufacturingItemCorrelationId')">
-            <option value="">Select item</option>
-            @for (item of items(); track item.correlationId) {
-            <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }} - {{ item.itemName }}
-            </option>
-            }
-          </select>
+          <select class="form-select" formControlName="manufacturingItemCorrelationId" [class.is-invalid]="isFieldInvalid('manufacturingItemCorrelationId')">
+  <option value="">Select item</option>
+  @for (item of filteredItems(); track item.correlationId) {
+    <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }} - {{ item.itemName }}</option>
+  }
+</select>
         </div>
 
         <div class="mb-3">
@@ -81,13 +89,12 @@
 
         <div class="mb-3">
           <label class="form-label">Operator <span>*</span></label>
-          <select class="form-select" formControlName="operatorUserCorrelationId"
-            [class.is-invalid]="isFieldInvalid('operatorUserCorrelationId')">
-            <option value="">Select operator</option>
-            @for (user of users(); track user.correlationId) {
-            <option [value]="user.correlationId">{{ userDisplayName(user) }}</option>
-            }
-          </select>
+          <select class="form-select" formControlName="operatorUserCorrelationId" [class.is-invalid]="isFieldInvalid('operatorUserCorrelationId')">
+  <option value="">Select operator</option>
+  @for (user of users(); track user.correlationId) {
+    <option [value]="user.correlationId">{{ userDisplayName(user) }}</option>
+  }
+</select>
         </div>
 
         <div class="mb-3">
@@ -157,26 +164,71 @@
           </div>
         </div>
         <div class="mb-3">
-          <label class="form-label">Setup Start</label>
-          <input type="time" class="form-control" formControlName="setupStartTime" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Setup End</label>
-          <input type="time" class="form-control" formControlName="setupEndTime" />
-        </div>
-        <div class="mb-3">
           <label class="form-label">Idle Time Minutes</label>
           <input type="number" min="0" step="1" class="form-control" formControlName="idleMinutes" />
         </div>
         <div class="mb-3">
           <label class="form-label">Idle Reason</label>
           <select class="form-select" formControlName="idleReason">
-            <option value="">Select reason</option>
-            @for (reason of idleReasons; track reason) {
-            <option [value]="reason">{{ reason }}</option>
-            }
-          </select>
+  <option value="">Select reason</option>
+  @for (reason of idleReasons; track reason) {
+    <option [value]="reason">{{ reason }}</option>
+  }
+</select>
         </div>
+      </div>
+
+      <div class="setup-time-list" formArrayName="setupTimes">
+        <div class="card-title card-title--compact">
+          <div>
+            <h2>Setup Times</h2>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="reportStatus() === 'Completed'"
+            (click)="addSetupTime()">
+            <i class="bi bi-plus-circle"></i>
+            Add Setup
+          </button>
+        </div>
+        @if (setupTimesArray.length > 0) {
+        <div class="table-wrap">
+          <table class="setup-table">
+            <thead>
+              <tr>
+                <th>Setup Time</th>
+                <th>Remarks</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (setup of setupTimesArray.controls; track setup) {
+              <tr [formGroupName]="$index">
+                <td class="time-slot">
+                  <input type="time" class="form-control form-control-sm" formControlName="setupStartTime" />
+                  <span>-</span>
+                  <input type="time" class="form-control form-control-sm" formControlName="setupEndTime" />
+                </td>
+                <td><input class="form-control form-control-sm" formControlName="remarks" placeholder="Remarks" /></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="reportStatus() === 'Completed'"
+                    (click)="removeSetupTime($index)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        } @else {
+        <div class="empty-state empty-state--compact">
+          <i class="bi bi-tools"></i>
+          <h3>No Setup Time</h3>
+          <p>Add setup in/out time when setup happens during production.</p>
+        </div>
+        }
+      </div>
+
+      <div class="form-grid">
         <div class="mb-3">
           <label class="form-label">Machine Breakdown Minutes</label>
           <input type="number" min="0" step="1" class="form-control" formControlName="machineBreakdownMinutes" />
@@ -328,7 +380,7 @@
 
       @if (entriesArray.length > 0) {
       <div class="table-wrap" formArrayName="entries">
-        <table>
+        <table class="entries-table">
           <thead>
             <tr>
               <th>Time Slot</th>
@@ -353,12 +405,12 @@
               <td><input type="number" min="0" step="0.01" class="form-control form-control-sm"
                   formControlName="rejectedQuantity" /></td>
               <td>
-                <select class="form-select form-select-sm" formControlName="rejectReason">
-                  <option value="">-</option>
-                  @for (reason of rejectReasons; track reason) {
-                  <option [value]="reason">{{ reason }}</option>
-                  }
-                </select>
+                <select class="form-select compact-select" formControlName="rejectReason">
+  <option value="">-</option>
+  @for (reason of rejectReasons; track reason) {
+    <option [value]="reason">{{ reason }}</option>
+  }
+</select>
               </td>
               <td><input class="form-control form-control-sm" formControlName="remarks" placeholder="Remarks" /></td>
               <td><span class="badge" [ngClass]="statusClass(entryDisplayStatus($index))">{{ entryDisplayStatus($index)

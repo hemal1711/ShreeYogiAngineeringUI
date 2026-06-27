@@ -429,6 +429,10 @@ export class AccessControlService {
     return this.http.post<ApiResponse<boolean>>(API_ENDPOINTS.userRoles.remove, request);
   }
 
+  getCustomersLookup(): Observable<ApiResponse<Customer[]>> {
+    return this.http.get<ApiResponse<Customer[]>>(API_ENDPOINTS.customers.customerLookups);
+  }
+
   private pageParams(page: number, pageSize: number, search?: string): HttpParams {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -553,6 +557,9 @@ export class AccessControlService {
     formData.append('lotNo', request.lotNo ?? '');
     formData.append('remarks', request.remarks ?? '');
     formData.append('photoUrl', request.photoUrl ?? '');
+    formData.append('isItemRejected', String(!!request.isItemRejected));
+    formData.append('rejectedReason', request.rejectedReason ?? '');
+    formData.append('rejectedQuantity', String(request.rejectedQuantity ?? 0));
     if (photo) formData.append('photo', photo);
     return formData;
   }

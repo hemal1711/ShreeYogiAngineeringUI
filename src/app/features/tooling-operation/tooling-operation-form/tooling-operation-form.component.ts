@@ -10,8 +10,9 @@ import { PhotoOptimizerService } from '../../../core/services/photo-optimizer.se
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ConfirmationDialogService } from '../../../shared/components/confirmation-dialog';
 import { ToastService } from '../../../shared/components/toast';
+import { NgSelectModule } from '@ng-select/ng-select';
 
-@Component({ selector: 'app-tooling-operation-form', standalone: true, imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent], templateUrl: './tooling-operation-form.component.html', styleUrl: './tooling-operation-form.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-tooling-operation-form', standalone: true, imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent, NgSelectModule], templateUrl: './tooling-operation-form.component.html', styleUrl: './tooling-operation-form.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
 export class ToolingOperationFormComponent {
   
   private readonly destroyRef = inject(DestroyRef);

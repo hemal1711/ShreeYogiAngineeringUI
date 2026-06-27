@@ -21,28 +21,28 @@
     <div class="report-filters__grid">
       @if (canReadCustomers) {
         <select class="form-select" [(ngModel)]="filter.customerCorrelationId" (change)="onCustomerChange()">
-          <option value="">All Customers</option>
-          @for (customer of customers(); track customer.correlationId) {
-            <option [value]="customer.correlationId">{{ customer.customerName }}</option>
-          }
-        </select>
+  <option value="">All Customers</option>
+  @for (customer of customers(); track customer.correlationId) {
+    <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+  }
+</select>
       }
 
       @if (canReadManufacturingItems) {
         <select class="form-select" [(ngModel)]="filter.itemCorrelationId" (change)="onFilter()">
-          <option value="">All Items</option>
-          @for (item of filteredItems(); track item.correlationId) {
-            <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.customerCode }}</option>
-          }
-        </select>
+  <option value="">All Items</option>
+  @for (item of filteredItems(); track item.correlationId) {
+    <option [value]="item.correlationId">{{ item.itemCode }}</option>
+  }
+</select>
       }
 
       <select class="form-select" [(ngModel)]="filter.machineType" (change)="onFilter()">
-        <option value="">All Machines</option>
-        @for (machineType of machineTypes(); track machineType.correlationId) {
-          <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
-        }
-      </select>
+  <option value="">All Machines</option>
+  @for (machineType of machineTypes(); track machineType.typeName) {
+    <option [value]="machineType.typeName">{{ machineType.typeName }}</option>
+  }
+</select>
 
       <input class="form-control" type="date" [(ngModel)]="filter.reportDateFrom" (change)="onFilter()" />
       <input class="form-control" type="date" [(ngModel)]="filter.reportDateTo" (change)="onFilter()" />

@@ -244,6 +244,9 @@ export interface ManufacturingOperation {
   lotNo?: string;
   remarks?: string;
   photoUrl?: string;
+  isItemRejected: boolean;
+  rejectedReason?: string;
+  rejectedQuantity: number;
   createdOn: string;
 }
 
@@ -256,6 +259,9 @@ export interface ManufacturingOperationRequest {
   lotNo?: string;
   remarks?: string;
   photoUrl?: string;
+  isItemRejected?: boolean;
+  rejectedReason?: string;
+  rejectedQuantity?: number;
 }
 
 export interface ManufacturingOperationFilter {
@@ -279,6 +285,13 @@ export interface ProductionReportEntry {
   remarks?: string;
   submittedAt?: string;
   lockedAt?: string;
+}
+
+export interface ProductionReportSetupTime {
+  correlationId?: string;
+  setupStartTime: string;
+  setupEndTime: string;
+  remarks?: string;
 }
 
 export interface ProductionReport {
@@ -327,6 +340,7 @@ export interface ProductionReport {
   totalOkQuantity: number;
   totalRejectedQuantity: number;
   remarks?: string;
+  setupTimes: ProductionReportSetupTime[];
   entries: ProductionReportEntry[];
   createdOn: string;
 }
@@ -359,6 +373,7 @@ export interface ProductionReportRequest {
   machineBreakdownMinutes?: number | null;
   toolBreakdownMinutes?: number | null;
   remarks?: string;
+  setupTimes: ProductionReportSetupTime[];
   entries: ProductionReportEntry[];
 }
 

@@ -6,11 +6,12 @@ import { Customer, ManufacturingItem, ManufacturingStockSummary, PagedResponse }
 import { AccessControlService } from '../../../core/services/access-control.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../shared/components/toast';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-manufacturing-stock-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, BreadcrumbComponent],
+  imports: [CommonModule, FormsModule, BreadcrumbComponent, NgSelectModule],
   templateUrl: './manufacturing-stock-summary.component.html',
   styleUrl: './manufacturing-stock-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
