@@ -19,13 +19,23 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="management-form operation-form">
     <div class="form-grid">
       <div class="mb-3">
+        <label class="form-label">Customer</label>
+        <select class="form-select" formControlName="customerCorrelationId">
+          <option value="">Select customer</option>
+          @for (customer of customers(); track customer.correlationId) {
+            <option [value]="customer.correlationId">{{ customer.customerName }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label">Item <span>*</span></label>
         <select class="form-select" formControlName="manufacturingItemCorrelationId" [class.is-invalid]="isFieldInvalid('manufacturingItemCorrelationId')">
-  <option value="">Select item</option>
-  @for (item of items(); track item.correlationId) {
-    <option [value]="item.correlationId">{{ item.itemCode }}</option>
-  }
-</select>
+          <option value="">Select item</option>
+          @for (item of filteredItems(); track item.correlationId) {
+            <option [value]="item.correlationId">{{ item.itemCode }} - {{ item.itemName }}</option>
+          }
+        </select>
       </div>
 
       <div class="mb-3">
