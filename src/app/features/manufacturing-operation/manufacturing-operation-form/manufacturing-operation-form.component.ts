@@ -4,7 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
-import { ManufacturingItem, ManufacturingOperation, PagedResponse } from '../../../core/models/access-control.model';
+import { forkJoin } from 'rxjs';
+import { Customer, ManufacturingItem, ManufacturingOperation, PagedResponse } from '../../../core/models/access-control.model';
 import { AccessControlService } from '../../../core/services/access-control.service';
 import { PhotoOptimizerService } from '../../../core/services/photo-optimizer.service';
 import { BreadcrumbComponent } from '../../../shared/breadcrumb/breadcrumb.component';
@@ -29,7 +30,9 @@ export class ManufacturingOperationFormComponent {
   private readonly dialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
 
+  readonly customers = signal<Customer[]>([]);
   readonly items = signal<ManufacturingItem[]>([]);
+  readonly filteredItems = signal<ManufacturingItem[]>([]);
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
   readonly correlationId = signal<string | null>(null);
@@ -40,6 +43,7 @@ export class ManufacturingOperationFormComponent {
   readonly types = ['Received', 'Dispatched'];
 
   form: FormGroup = this.fb.group({
+    customerCorrelationId: [''],
     manufacturingItemCorrelationId: ['', Validators.required],
     operationType: ['Received', Validators.required],
     quantity: [null, [Validators.required, Validators.min(0.01)]],
@@ -66,6 +70,10 @@ export class ManufacturingOperationFormComponent {
     this.form.controls['isItemRejected'].valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.syncRejectedValidators());
+
+    this.form.controls['customerCorrelationId'].valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(customerId => this.onCustomerChange(customerId));
 
     this.loadPage(id);
   }
@@ -100,7 +108,7 @@ export class ManufacturingOperationFormComponent {
       return;
     }
 
-    const raw = this.form.value;
+    const { customerCorrelationId, ...raw } = this.form.value;
     const request = {
       ...raw,
       isItemRejected: raw.operationType === 'Dispatched' && !!raw.isItemRejected,
@@ -151,9 +159,16 @@ export class ManufacturingOperationFormComponent {
 
   private loadPage(id: string | null): void {
     this.isLoading.set(true);
-    this.service.getManufacturingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    forkJoin({
+      customers: this.service.getCustomers(1, 500),
+      items: this.service.getManufacturingItems(1, 500)
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: r => {
-        this.items.set((r.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? []);
+        this.customers.set((r.customers.data as PagedResponse<Customer> | undefined)?.items ?? []);
+        const loadedItems = (r.items.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? [];
+        this.items.set(loadedItems);
+        this.filteredItems.set(loadedItems);
+
         if (id) this.loadOperation(id);
         else {
           this.syncRejectedValidators();
@@ -162,7 +177,7 @@ export class ManufacturingOperationFormComponent {
       },
       error: e => {
         this.isLoading.set(false);
-        this.toastService.error(e?.error?.message || 'We could not load items.', 'Items not loaded');
+        this.toastService.error(e?.error?.message || 'We could not load lookup data.', 'Loading failed');
       }
     });
   }
@@ -172,8 +187,11 @@ export class ManufacturingOperationFormComponent {
       next: r => {
         const op = r.data as ManufacturingOperation | undefined;
         if (op) {
+          const item = this.items().find(i => i.correlationId === op.manufacturingItemCorrelationId);
+          const customerId = op.customerCorrelationId || item?.customerCorrelationId || '';
           this.form.patchValue({
             ...op,
+            customerCorrelationId: customerId,
             operationType: op.operationType === 'Rejected' ? 'Dispatched' : op.operationType,
             isItemRejected: op.operationType === 'Rejected' || !!op.isItemRejected,
             rejectedReason: op.rejectedReason ?? (op.operationType === 'Rejected' ? op.remarks ?? '' : ''),
@@ -212,6 +230,17 @@ export class ManufacturingOperationFormComponent {
 
     reason.updateValueAndValidity({ emitEvent: false });
     quantity.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private onCustomerChange(customerId: string | null | undefined): void {
+    const selectedCustomerId = customerId || '';
+    const filtered = this.items().filter(item => !selectedCustomerId || item.customerCorrelationId === selectedCustomerId);
+    this.filteredItems.set(filtered);
+
+    const currentSelection = this.form.controls['manufacturingItemCorrelationId'].value;
+    if (currentSelection && !filtered.some(i => i.correlationId === currentSelection)) {
+      this.form.controls['manufacturingItemCorrelationId'].setValue('');
+    }
   }
 
   private today(value?: string): string {
