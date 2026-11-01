@@ -24,12 +24,33 @@ private readonly service = inject(AccessControlService);
   readonly items = signal<ToolingItem[]>([]);
   readonly rows = signal<ToolingStockSummary[]>([]);
   readonly isLoading = signal(false);
-  filter = { itemCorrelationId: '', location: '' };
+  private requestVersion = 0;
+  filter = { itemCorrelationId: '', location: '', dateFrom: this.startOfCurrentMonth(), dateTo: this.today() };
+  private appliedDateFrom = this.filter.dateFrom;
+  private appliedDateTo = this.filter.dateTo;
   readonly locations = computed(() => Array.from(new Set(this.items().map(x => x.location).filter(Boolean) as string[])).sort());
   readonly cards = computed(() => ({ inStock: this.rows().filter(x => x.status === 'In Stock').length, low: this.rows().filter(x => x.status === 'Low Stock').length, out: this.rows().filter(x => x.status === 'Out').length }));
   constructor() { this.loadLookups(); this.loadRows(); }
   loadLookups(): void { this.service.getToolingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ToolingItem> | undefined)?.items ?? [])); }
-  loadRows(): void { this.isLoading.set(true); this.service.getToolingStockSummary(this.filter).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: r => { this.rows.set(r.data ?? []); this.isLoading.set(false); }, error: e => { this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load stock summary.', 'Stock not loaded'); } }); }
+  get isDateRangeValid(): boolean { return this.isValidDateRange(); }
+  loadRows(): void {
+    const requestVersion = ++this.requestVersion;
+    this.isLoading.set(true);
+    this.service.getToolingStockSummary({ itemCorrelationId: this.filter.itemCorrelationId, location: this.filter.location, dateFrom: this.appliedDateFrom, dateTo: this.appliedDateTo }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: r => { if (requestVersion !== this.requestVersion) return; this.rows.set(r.data ?? []); this.isLoading.set(false); },
+      error: e => { if (requestVersion !== this.requestVersion) return; this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load stock summary.', 'Stock not loaded'); }
+    });
+  }
+  applyDateRange(): void {
+    if (!this.isValidDateRange()) return;
+    this.appliedDateFrom = this.filter.dateFrom;
+    this.appliedDateTo = this.filter.dateTo;
+    this.loadRows();
+  }
+  private today(): string { return this.toDateInputValue(new Date()); }
+  private startOfCurrentMonth(): string { const today = new Date(); return this.toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1)); }
+  private toDateInputValue(date: Date): string { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
+  private isValidDateRange(): boolean { return !!this.filter.dateFrom && !!this.filter.dateTo && this.filter.dateFrom <= this.filter.dateTo; }
   exportCsv(): void { const rows = [['Item Code','Item Name','Location','Received','Used','In Hand','Status'], ...this.rows().map(x => [x.itemCode, x.itemName, x.location || '', String(x.receivedQty), String(x.usedQty), String(x.qtyInHand), x.status])]; this.downloadCsv('tooling-stock-summary.csv', rows); }
   format(value: number): string { return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(value); }
   statusClass(status: string): string { return status === 'Out' ? 'badge-danger' : status === 'Low Stock' ? 'badge-warning' : 'badge-success'; }

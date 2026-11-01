@@ -329,7 +329,7 @@ export class AccessControlService {
     return this.http.delete<ApiResponse<boolean>>(API_ENDPOINTS.productionReports.byId(correlationId));
   }
 
-  getManufacturingStockSummary(filter: { customerCorrelationId?: string; itemCorrelationId?: string }): Observable<ApiResponse<ManufacturingStockSummary[]>> {
+  getManufacturingStockSummary(filter: { customerCorrelationId?: string; itemCorrelationId?: string; dateFrom?: string; dateTo?: string }): Observable<ApiResponse<ManufacturingStockSummary[]>> {
     return this.http.get<ApiResponse<ManufacturingStockSummary[]>>(`${API_ENDPOINTS.manufacturingOperations.list}/stock-summary`, {
       params: this.stockSummaryParams(filter)
     });
@@ -379,7 +379,7 @@ export class AccessControlService {
     return this.http.delete<ApiResponse<boolean>>(API_ENDPOINTS.toolingOperations.byId(correlationId));
   }
 
-  getToolingStockSummary(filter: { itemCorrelationId?: string; location?: string }): Observable<ApiResponse<ToolingStockSummary[]>> {
+  getToolingStockSummary(filter: { itemCorrelationId?: string; location?: string; dateFrom?: string; dateTo?: string }): Observable<ApiResponse<ToolingStockSummary[]>> {
     return this.http.get<ApiResponse<ToolingStockSummary[]>>(`${API_ENDPOINTS.toolingOperations.list}/stock-summary`, {
       params: this.stockSummaryParams(filter)
     });

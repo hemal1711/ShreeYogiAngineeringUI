@@ -1,1 +1,12 @@
 @use '../../shared-management';
+
+.stock-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.stock-date-filter .form-control {
+  min-width: 9.5rem;
+}

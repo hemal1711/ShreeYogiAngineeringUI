@@ -26,7 +26,10 @@ export class ManufacturingStockSummaryComponent {
   readonly filteredItems = signal<ManufacturingItem[]>([]);
   readonly rows = signal<ManufacturingStockSummary[]>([]);
   readonly isLoading = signal(false);
-  filter = { customerCorrelationId: '', itemCorrelationId: '' };
+  private requestVersion = 0;
+  filter = { customerCorrelationId: '', itemCorrelationId: '', dateFrom: this.startOfCurrentMonth(), dateTo: this.today() };
+  private appliedDateFrom = this.filter.dateFrom;
+  private appliedDateTo = this.filter.dateTo;
   readonly totals = computed(() => this.rows().reduce((acc, row) => ({
     received: acc.received + row.receivedQty,
     dispatched: acc.dispatched + row.dispatchedQty,
@@ -35,7 +38,25 @@ export class ManufacturingStockSummaryComponent {
   }), { received: 0, dispatched: 0, rejected: 0, inHand: 0 }));
   constructor() { this.loadLookups(); this.loadRows(); }
   loadLookups(): void { this.service.getCustomers(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.customers.set((r.data as PagedResponse<Customer> | undefined)?.items ?? [])); this.service.getManufacturingItems(1, 500).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(r => this.items.set((r.data as PagedResponse<ManufacturingItem> | undefined)?.items ?? [])); }
-  loadRows(): void { this.isLoading.set(true); this.service.getManufacturingStockSummary({ customerCorrelationId: this.filter.customerCorrelationId, itemCorrelationId: this.filter.itemCorrelationId }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: r => { this.rows.set(r.data ?? []); this.isLoading.set(false); }, error: e => { this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load stock summary.', 'Stock not loaded'); } }); }
+  get isDateRangeValid(): boolean { return this.isValidDateRange(); }
+  loadRows(): void {
+    const requestVersion = ++this.requestVersion;
+    this.isLoading.set(true);
+    this.service.getManufacturingStockSummary({ customerCorrelationId: this.filter.customerCorrelationId, itemCorrelationId: this.filter.itemCorrelationId, dateFrom: this.appliedDateFrom, dateTo: this.appliedDateTo }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: r => { if (requestVersion !== this.requestVersion) return; this.rows.set(r.data ?? []); this.isLoading.set(false); },
+      error: e => { if (requestVersion !== this.requestVersion) return; this.isLoading.set(false); this.toastService.error(e?.error?.message || 'We could not load stock summary.', 'Stock not loaded'); }
+    });
+  }
+  applyDateRange(): void {
+    if (!this.isValidDateRange()) return;
+    this.appliedDateFrom = this.filter.dateFrom;
+    this.appliedDateTo = this.filter.dateTo;
+    this.loadRows();
+  }
+  private today(): string { return this.toDateInputValue(new Date()); }
+  private startOfCurrentMonth(): string { const today = new Date(); return this.toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1)); }
+  private toDateInputValue(date: Date): string { const year = date.getFullYear(); const month = String(date.getMonth() + 1).padStart(2, '0'); const day = String(date.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; }
+  private isValidDateRange(): boolean { return !!this.filter.dateFrom && !!this.filter.dateTo && this.filter.dateFrom <= this.filter.dateTo; }
   exportCsv(): void { const rows = [['Item Code', 'Item Name', 'Customer', 'Received Qty', 'Dispatched Qty', 'Rejected Qty', 'Qty In Hand'], ...this.rows().map(x => [x.itemCode, x.itemName, x.customerCode, String(x.receivedQty), String(x.dispatchedQty), String(x.rejectedQty), String(x.qtyInHand)])]; this.downloadCsv('manufacturing-stock-summary.csv', rows); }
   format(value: number): string { return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(value); }
   tone(value: number): string { return value < 0 ? 'is-danger' : 'is-success'; }
